@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/test-setup.ts","./src/types.ts","./src/components/environmentbadge.tsx","./src/components/pricechart.test.tsx","./src/components/pricechart.tsx","./src/components/searchpanel.test.tsx","./src/components/searchpanel.tsx","./src/components/watchrow.tsx","./src/components/watchlist.tsx"],"version":"5.9.3"}

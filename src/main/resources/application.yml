@@ -1,0 +1,35 @@
+spring:
+  # Optional local overrides (e.g. a dev Saxo token) live in ./application-local.yml, which is
+  # gitignored. `optional:` means the app starts fine when the file is absent (CI/prod).
+  config:
+    import: "optional:file:./application-local.yml"
+  application:
+    name: saxo-investment-manager
+  datasource:
+    url: ${SAXO_DB_URL:jdbc:mysql://localhost:3306/saxo?createDatabaseIfNotExist=true}
+    username: ${SAXO_DB_USER:unwire}
+    password: ${SAXO_DB_PASSWORD:unwire}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  webflux:
+    problemdetails:
+      enabled: true
+
+# Saxo OpenAPI connection. Switch environments by setting SAXO_ENV to simulation|live and
+# providing the matching token. Tokens are read from the environment, never committed.
+saxo:
+  environment: ${SAXO_ENV:simulation}
+  simulation:
+    token: ${SAXO_SIM_TOKEN:}
+  live:
+    token: ${SAXO_LIVE_TOKEN:}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    jp.saxo_investment_manager: INFO

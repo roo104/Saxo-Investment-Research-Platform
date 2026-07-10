@@ -496,10 +496,19 @@ body {
     }
 }
 
-.range-tabs {
+.chart-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.range-tabs,
+.mode-toggle {
     display: flex;
     gap: 6px;
-    margin-bottom: 8px;
 }
 
 .range-tab {
@@ -582,6 +591,37 @@ body {
     stroke: var(--border);
     stroke-width: 1;
     stroke-dasharray: 2 4;
+}
+
+/* candlesticks */
+.candle-up .candle-wick,
+.candle-up .candle-body {
+    stroke: var(--up);
+    fill: var(--up);
+}
+
+.candle-down .candle-wick,
+.candle-down .candle-body {
+    stroke: var(--down);
+    fill: var(--down);
+}
+
+.candle-wick {
+    stroke-width: 1;
+}
+
+.candle-body {
+    stroke-width: 0.5;
+}
+
+.candle-live .candle-body {
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+.ohlc {
+    display: inline-flex;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .chart-dot {

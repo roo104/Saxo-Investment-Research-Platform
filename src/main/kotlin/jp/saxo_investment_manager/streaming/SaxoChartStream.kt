@@ -116,7 +116,7 @@ class SaxoChartStream(
         val candles = LinkedHashMap<String, ChartSample>()
         response.get("Snapshot")?.get("Data")?.forEach { node ->
             val c = objectMapper.treeToValue(node, ChartSample::class.java)
-            candles[c.time] = c
+            candles[normTime(c.time)] = c
         }
         val sub = Sub(referenceId, key, candles)
         subsByKey[key] = sub
@@ -185,7 +185,7 @@ class SaxoChartStream(
                 val changed = mutableListOf<ChartSample>()
                 data.forEach { node ->
                     val c = objectMapper.treeToValue(node, ChartSample::class.java)
-                    sub.candles[c.time] = c
+                    sub.candles[normTime(c.time)] = c
                     changed.add(c)
                 }
                 if (changed.isNotEmpty()) {
@@ -211,8 +211,15 @@ private fun mid(direct: Double?, bid: Double?, ask: Double?): Double? = when {
     else -> bid ?: ask
 }
 
+/**
+ * Canonicalizes a Saxo candle timestamp. The REST/subscription snapshot uses `...:00Z` while
+ * streaming deltas use `...:00.0000000Z`; both must key to the same candle, so we parse to an
+ * Instant and re-serialize. Falls back to the raw string if it can't be parsed.
+ */
+private fun normTime(t: String): String = runCatching { java.time.Instant.parse(t).toString() }.getOrDefault(t)
+
 private fun ChartSample.toPoint() = PricePoint(
-    time = time,
+    time = normTime(time),
     open = mid(open, openBid, openAsk),
     high = mid(high, highBid, highAsk),
     low = mid(low, lowBid, lowAsk),

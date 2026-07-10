@@ -16,22 +16,31 @@ function fmtTime(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 }
 
+export type ChartMode = 'line' | 'candles'
+
 interface Props {
   points: PricePoint[]
   currency: string | null
-  /** When true, the last point is the live (streaming) candle: pulsing tip, guide line, LIVE tag. */
+    mode?: ChartMode
+    /** When true, the last candle is the live (streaming) one: pulsing tip, guide line, LIVE tag. */
   live?: boolean
 }
 
+interface Candle {
+    o: number
+    h: number
+    l: number
+    c: number
+    label: string
+}
+
 /**
- * A single-series price line + area chart. Per the dataviz method: one hue (the brand gold),
- * no legend (the panel title names the series), recessive axes, and a crosshair-and-tooltip hover.
- *
- * The [points] are OHLC candle closes. When [live], the final candle is streaming — Saxo re-sends
- * it as its close moves and appends new candles as the horizon rolls over — so the right edge tracks
- * the market in real time. Width is measured from the container so the SVG maps 1:1 to pixels.
+ * A single-series price chart with two views: a line + area of closes, or OHLC candlesticks
+ * (green up / red down). One hue for the line (brand gold), semantic up/down for candles; recessive
+ * axes; crosshair-and-tooltip hover. When [live], the final candle streams and the right edge tracks
+ * the market. Width is measured from the container so the SVG maps 1:1 to pixels.
  */
-export function PriceChart({ points, currency, live }: Props) {
+export function PriceChart({points, currency, mode = 'line', live}: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const [width, setWidth] = useState(560)
@@ -48,37 +57,33 @@ export function PriceChart({ points, currency, live }: Props) {
     return () => ro.disconnect()
   }, [])
 
-  const { series, labels } = useMemo(() => {
-    const series: number[] = []
+    const candlesData = useMemo<Candle[]>(() => {
     const times: string[] = []
+        const rows: Omit<Candle, 'label'>[] = []
     for (const p of points) {
-      if (p.close != null) {
-        series.push(p.close)
+        if (p.close == null) continue
+        const c = p.close
+        rows.push({o: p.open ?? c, h: p.high ?? c, l: p.low ?? c, c})
         times.push(p.time)
-      }
     }
-    // Label with times for intraday ranges (span under ~36h), dates otherwise.
     const spanMs = times.length > 1 ? Date.parse(times[times.length - 1]) - Date.parse(times[0]) : 0
-    const format = spanMs > 0 && spanMs < 36 * 3600 * 1000 ? fmtTime : fmtDate
-    return { series, labels: times.map(format) }
+        const fmt = spanMs > 0 && spanMs < 36 * 3600 * 1000 ? fmtTime : fmtDate
+        return rows.map((r, i) => ({...r, label: fmt(times[i])}))
   }, [points])
 
   const geometry = useMemo(() => {
-    if (series.length < 2) return null
+      if (candlesData.length < 2) return null
     const W = width
-    const min = Math.min(...series)
-    const max = Math.max(...series)
+      const min = mode === 'candles' ? Math.min(...candlesData.map((d) => d.l)) : Math.min(...candlesData.map((d) => d.c))
+      const max = mode === 'candles' ? Math.max(...candlesData.map((d) => d.h)) : Math.max(...candlesData.map((d) => d.c))
     const span = max - min || max || 1
     const innerW = W - PAD.left - PAD.right
     const innerH = H - PAD.top - PAD.bottom
-    const x = (i: number) => PAD.left + (i / (series.length - 1)) * innerW
+      const x = (i: number) => PAD.left + (i / (candlesData.length - 1)) * innerW
     const y = (v: number) => PAD.top + innerH - ((v - min) / span) * innerH
-    const coords = series.map((v, i) => [x(i), y(v)] as const)
-    const line = coords.map(([cx, cy], i) => `${i === 0 ? 'M' : 'L'}${cx.toFixed(1)},${cy.toFixed(1)}`).join(' ')
-    const base = H - PAD.bottom
-    const area = `${line} L${coords[coords.length - 1][0].toFixed(1)},${base} L${coords[0][0].toFixed(1)},${base} Z`
-    return { W, min, max, x, y, coords, line, area }
-  }, [series, width])
+      const bodyW = Math.max(1, Math.min(14, (innerW / candlesData.length) * 0.62))
+      return {W, min, max, x, y, innerW, bodyW}
+  }, [candlesData, width, mode])
 
   if (!geometry) {
     return (
@@ -88,19 +93,27 @@ export function PriceChart({ points, currency, live }: Props) {
     )
   }
 
-  const first = series[0]
-  const last = series[series.length - 1]
+    const closes = candlesData.map((d) => d.c)
+    const first = closes[0]
+    const last = closes[closes.length - 1]
   const change = last - first
   const changePct = (change / first) * 100
   const up = change >= 0
   const isLiveTip = !!live
-  const lastCoord = geometry.coords[geometry.coords.length - 1]
-  const hoverCoord = hover != null ? geometry.coords[hover] : null
+    const lastCoord = [geometry.x(candlesData.length - 1), geometry.y(last)] as const
+    const hoverIdx = hover
+    const hoverCoord = hoverIdx != null ? ([geometry.x(hoverIdx), geometry.y(closes[hoverIdx])] as const) : null
+
+    const linePath = closes
+        .map((v, i) => `${i === 0 ? 'M' : 'L'}${geometry.x(i).toFixed(1)},${geometry.y(v).toFixed(1)}`)
+        .join(' ')
+    const base = H - PAD.bottom
+    const areaPath = `${linePath} L${geometry.x(closes.length - 1).toFixed(1)},${base} L${geometry.x(0).toFixed(1)},${base} Z`
 
   function onMove(e: React.MouseEvent<SVGSVGElement>) {
     const rect = svgRef.current!.getBoundingClientRect()
     const ratio = (e.clientX - rect.left) / rect.width
-    setHover(Math.max(0, Math.min(series.length - 1, Math.round(ratio * (series.length - 1)))))
+      setHover(Math.max(0, Math.min(candlesData.length - 1, Math.round(ratio * (candlesData.length - 1)))))
   }
 
   return (
@@ -123,7 +136,7 @@ export function PriceChart({ points, currency, live }: Props) {
         height={H}
         viewBox={`0 0 ${geometry.W} ${H}`}
         role="img"
-        aria-label={`Price chart, latest ${fmtPrice(last)} ${currency ?? ''}`}
+        aria-label={`Price chart (${mode}), latest ${fmtPrice(last)} ${currency ?? ''}`}
         onMouseMove={onMove}
         onMouseLeave={() => setHover(null)}
       >
@@ -141,10 +154,32 @@ export function PriceChart({ points, currency, live }: Props) {
           <line className="chart-live-line" x1={PAD.left} y1={lastCoord[1]} x2={geometry.W - PAD.right} y2={lastCoord[1]} />
         )}
 
-        <path d={geometry.area} fill="url(#priceFill)" />
-        <path d={geometry.line} className="chart-line" />
+          {mode === 'line' ? (
+              <>
+                  <path d={areaPath} fill="url(#priceFill)"/>
+                  <path d={linePath} className="chart-line"/>
+              </>
+          ) : (
+              candlesData.map((d, i) => {
+                  const cx = geometry.x(i)
+                  const cls = d.c >= d.o ? 'candle-up' : 'candle-down'
+                  const bodyTop = geometry.y(Math.max(d.o, d.c))
+                  const bodyH = Math.max(1, Math.abs(geometry.y(d.c) - geometry.y(d.o)))
+                  const liveCls = isLiveTip && i === candlesData.length - 1 ? ' candle-live' : ''
+                  return (
+                      <g key={i} className={`${cls}${liveCls}`}>
+                          <line className="candle-wick" x1={cx} y1={geometry.y(d.h)} x2={cx} y2={geometry.y(d.l)}/>
+                          <rect className="candle-body" x={cx - geometry.bodyW / 2} y={bodyTop} width={geometry.bodyW}
+                                height={bodyH}/>
+                      </g>
+                  )
+              })
+          )}
 
-        <circle cx={lastCoord[0]} cy={lastCoord[1]} r={isLiveTip ? 4.5 : 4} className={isLiveTip ? 'chart-dot-live' : 'chart-dot'} />
+          {(mode === 'line' || isLiveTip) && (
+              <circle cx={lastCoord[0]} cy={lastCoord[1]} r={isLiveTip ? 4.5 : 4}
+                      className={isLiveTip ? 'chart-dot-live' : 'chart-dot'}/>
+          )}
 
         {hoverCoord && (
           <>
@@ -155,18 +190,30 @@ export function PriceChart({ points, currency, live }: Props) {
 
         <text className="chart-axis" x={PAD.left - 8} y={geometry.y(geometry.max) + 4} textAnchor="end">{fmtPrice(geometry.max)}</text>
         <text className="chart-axis" x={PAD.left - 8} y={geometry.y(geometry.min) + 4} textAnchor="end">{fmtPrice(geometry.min)}</text>
-        <text className="chart-axis" x={PAD.left} y={H - 6} textAnchor="start">{labels[0]}</text>
-        <text className="chart-axis" x={geometry.W - PAD.right} y={H - 6} textAnchor="end">{labels[labels.length - 1]}</text>
+          <text className="chart-axis" x={PAD.left} y={H - 6} textAnchor="start">{candlesData[0].label}</text>
+          <text className="chart-axis" x={geometry.W - PAD.right} y={H - 6}
+                textAnchor="end">{candlesData[candlesData.length - 1].label}</text>
       </svg>
 
       <div className="chart-tip tnum">
-        {hover != null ? (
-          <>
-            <span>{labels[hover]}</span>
-            <strong>{fmtPrice(series[hover])}</strong>
-          </>
+          {hoverIdx != null ? (
+              mode === 'candles' ? (
+                  <span className="ohlc">
+              <span>{candlesData[hoverIdx].label}</span>
+              <span>O {fmtPrice(candlesData[hoverIdx].o)}</span>
+              <span>H {fmtPrice(candlesData[hoverIdx].h)}</span>
+              <span>L {fmtPrice(candlesData[hoverIdx].l)}</span>
+              <strong>C {fmtPrice(candlesData[hoverIdx].c)}</strong>
+            </span>
+              ) : (
+                  <>
+                      <span>{candlesData[hoverIdx].label}</span>
+                      <strong>{fmtPrice(closes[hoverIdx])}</strong>
+                  </>
+              )
         ) : (
-          <span className="chart-tip-hint">{isLiveTip ? 'streaming live candles · hover for values' : 'hover the chart for values'}</span>
+              <span
+                  className="chart-tip-hint">{isLiveTip ? 'streaming live · hover for values' : 'hover the chart for values'}</span>
         )}
       </div>
     </div>

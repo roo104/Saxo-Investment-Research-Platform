@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PricePoint, WatchlistEntry } from '../types'
-import { PriceChart } from './PriceChart'
+import {PriceChart, type ChartMode} from './PriceChart'
 
 const RANGES = [
   { key: '1m', horizon: 1, count: 120 },
@@ -17,6 +17,7 @@ function fmt(value: number | null): string {
 export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove: (id: number) => void }) {
   const [expanded, setExpanded] = useState(false)
   const [range, setRange] = useState<(typeof RANGES)[number]['key']>('1m')
+    const [mode, setMode] = useState<ChartMode>('line')
   const [candles, setCandles] = useState<PricePoint[]>([])
   const [loading, setLoading] = useState(false)
   const [streaming, setStreaming] = useState(false)
@@ -108,16 +109,28 @@ export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove:
 
       {expanded && (
         <div className="chart-region">
-          <div className="range-tabs">
-            {RANGES.map((r) => (
-              <button key={r.key} className={`range-tab${range === r.key ? ' active' : ''}`} onClick={() => setRange(r.key)}>
-                {r.key}
-              </button>
-            ))}
+            <div className="chart-controls">
+                <div className="range-tabs">
+                    {RANGES.map((r) => (
+                        <button key={r.key} className={`range-tab${range === r.key ? ' active' : ''}`}
+                                onClick={() => setRange(r.key)}>
+                            {r.key}
+                        </button>
+                    ))}
+                </div>
+                <div className="mode-toggle">
+                    <button className={`range-tab${mode === 'line' ? ' active' : ''}`}
+                            onClick={() => setMode('line')}>Line
+                    </button>
+                    <button className={`range-tab${mode === 'candles' ? ' active' : ''}`}
+                            onClick={() => setMode('candles')}>Candles
+                    </button>
+                </div>
           </div>
           {loading && candles.length === 0 && <div className="empty"><span className="spinner" />streaming candles…</div>}
           {error && <div className="banner">{error}</div>}
-          {candles.length > 0 && <PriceChart points={candles} currency={entry.currency} live={streaming} />}
+            {candles.length > 0 &&
+                <PriceChart points={candles} currency={entry.currency} mode={mode} live={streaming}/>}
         </div>
       )}
     </div>

@@ -25,6 +25,12 @@ describe('PriceChart', () => {
         expect(getByText(/not enough price history/i)).toBeInTheDocument()
     })
 
+    it('renders candlesticks (no line) in candles mode', () => {
+        const {container} = render(<PriceChart points={pts([1.0, 1.1, 1.2])} currency="USD" mode="candles"/>)
+        expect(container.querySelector('.chart-line')).toBeNull()
+        expect(container.querySelectorAll('.candle-body').length).toBe(3)
+    })
+
     it('marks the last candle as the live tip when streaming', () => {
         const {container, getByText} = render(<PriceChart points={pts([1.0, 1.1, 1.25])} currency="USD" live/>)
 

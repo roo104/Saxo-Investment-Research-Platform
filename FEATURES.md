@@ -38,16 +38,16 @@ it.
 
 ## 3. Charts & technical analysis
 
-| Feature                                   | Status | Notes                                                                                                                                             |
-|-------------------------------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| Historical OHLC candles                   | ✅      | `GET /api/watchlist/{id}/history` → `chart/v3/charts`                                                                                             |
-| Selectable ranges (1W / 1M / 3M)          | ✅      | horizon + count presets in the UI                                                                                                                 |
-| Line + area chart with hover crosshair    | ✅      | custom SVG `PriceChart`                                                                                                                           |
-| Candlestick / OHLC bar view               | ⬜      | data already fetched (open/high/low/close)                                                                                                        |
-| More ranges & intraday (1D, 5Y, custom)   | ⬜      | more horizon/count presets                                                                                                                        |
-| Volume sub-panel                          | ⬜      | `Volume` field from chart data (securities)                                                                                                       |
-| Indicators: SMA/EMA, RSI, MACD, Bollinger | ⬜      | computed client- or server-side over candles                                                                                                      |
-| Compare / overlay multiple instruments    | ⬜      | indexed-to-100 multi-series                                                                                                                       |
+| Feature                                   | Status | Notes                                                                                                                                                                                   |
+|-------------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Historical OHLC candles                   | ✅      | `GET /api/watchlist/{id}/history` → `chart/v3/charts`                                                                                                                                   |
+| Selectable ranges (1W / 1M / 3M)          | ✅      | horizon + count presets in the UI                                                                                                                                                       |
+| Line + area chart with hover crosshair    | ✅      | custom SVG `PriceChart`                                                                                                                                                                 |
+| Candlestick / OHLC bar view               | ✅      | Line / Candles toggle in the chart; green-up / red-down candles with OHLC hover                                                                                                         |
+| More ranges & intraday (1D, 5Y, custom)   | ⬜      | more horizon/count presets                                                                                                                                                              |
+| Volume sub-panel                          | ⬜      | `Volume` field from chart data (securities)                                                                                                                                             |
+| Indicators: SMA/EMA, RSI, MACD, Bollinger | ⬜      | computed client- or server-side over candles                                                                                                                                            |
+| Compare / overlay multiple instruments    | ⬜      | indexed-to-100 multi-series                                                                                                                                                             |
 | Streaming chart updates                   | ✅      | real OHLC candle subscription (`chart/v3/charts/subscriptions`) → SSE (`GET /api/watchlist/{id}/chart/stream`); the current candle's high/low/close update live and new candles roll in |
 
 ## 4. Watchlists

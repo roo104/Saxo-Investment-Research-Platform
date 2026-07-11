@@ -1,8 +1,9 @@
 import {useEffect, useRef, useState} from 'react'
 import {api, ApiError} from '../api'
 import type {Instrument} from '../types'
+import {assetLabel} from '../assetTypes'
 
-const ASSET_TYPES = ['Stock', 'ETF', 'FxSpot', 'Bond', 'MutualFund', 'CfdOnStock']
+const ASSET_TYPES = ['Stock', 'ETF', 'Currency']
 
 interface Props {
     onAdd: (instrument: Instrument) => Promise<void>
@@ -109,7 +110,7 @@ export function SearchPanel({onAdd, isOnWatchlist}: Props) {
                                             {r.description}
                                         </div>
                                     </div>
-                                    <span className="tag">{r.exchangeId ?? r.assetType}</span>
+                                    <span className="tag">{r.exchangeId ?? assetLabel(r.assetType)}</span>
                                     <button
                                         className="btn btn-ghost"
                                         disabled={added || adding === r.uic}

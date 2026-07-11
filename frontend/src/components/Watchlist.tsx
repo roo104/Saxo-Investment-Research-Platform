@@ -1,5 +1,6 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import type {WatchlistEntry} from '../types'
+import {ASSET_FILTERS, type AssetFilter, inCategory} from '../assetTypes'
 import {WatchRow} from './WatchRow'
 import {WatchDetail} from './WatchDetail'
 
@@ -13,19 +14,23 @@ interface Props {
 
 export function Watchlist({entries, loading, error, streaming, onRemove}: Props) {
     const [selectedId, setSelectedId] = useState<number | null>(null)
+    const [filter, setFilter] = useState<AssetFilter>('All')
 
-    // Show the list alphabetically by company name (the prominent label in each row).
-    const sorted = [...entries].sort((a, b) =>
-        a.description.localeCompare(b.description, undefined, {sensitivity: 'base'}))
+    // Filter by asset type, then show alphabetically by company name (the prominent label in each row).
+    const visible = useMemo(
+        () => entries
+            .filter((e) => inCategory(e.assetType, filter))
+            .sort((a, b) => a.description.localeCompare(b.description, undefined, {sensitivity: 'base'})),
+        [entries, filter])
 
     // Keep a valid selection: default to the first visible row, and re-point if the selected one disappears.
     useEffect(() => {
-        if (sorted.length === 0) {
+        if (visible.length === 0) {
             setSelectedId(null)
-        } else if (selectedId == null || !sorted.some((e) => e.id === selectedId)) {
-            setSelectedId(sorted[0].id)
+        } else if (selectedId == null || !visible.some((e) => e.id === selectedId)) {
+            setSelectedId(visible[0].id)
         }
-    }, [entries, selectedId])
+    }, [visible, selectedId])
 
     const selected = entries.find((e) => e.id === selectedId) ?? null
 
@@ -37,14 +42,26 @@ export function Watchlist({entries, loading, error, streaming, onRemove}: Props)
                     <span className="count">
                         {streaming && entries.length > 0 ? <span className="live-dot" title="Live streaming"/> : null}
                         {loading && entries.length === 0 ? <span className="spinner"/> : null}
-                        {entries.length} tracked
+                        {filter === 'All' ? entries.length : `${visible.length} / ${entries.length}`} tracked
                     </span>
                 </div>
+
+                {entries.length > 0 && (
+                    <div className="watch-filter" role="tablist" aria-label="Filter by asset type">
+                        {ASSET_FILTERS.map((f) => (
+                            <button key={f} role="tab" aria-selected={filter === f}
+                                    className={`range-tab${filter === f ? ' active' : ''}`}
+                                    onClick={() => setFilter(f)}>
+                                {f}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {error && <div className="banner">{error}</div>}
 
                 <div className="rows">
-                    {sorted.map((e) => (
+                    {visible.map((e) => (
                         <WatchRow key={e.id} entry={e} selected={e.id === selectedId} onSelect={setSelectedId}
                                   onRemove={onRemove}/>
                     ))}
@@ -53,6 +70,13 @@ export function Watchlist({entries, loading, error, streaming, onRemove}: Props)
                         <div className="empty">
                             <span className="big">Empty</span>
                             Search above and add an instrument to start tracking.
+                        </div>
+                    )}
+
+                    {!loading && entries.length > 0 && visible.length === 0 && (
+                        <div className="empty">
+                            <span className="big">No matches</span>
+                            No {filter} instruments on your watchlist.
                         </div>
                     )}
                 </div>

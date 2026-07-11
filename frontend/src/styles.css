@@ -275,6 +275,14 @@ body {
     animation: pulse 1.8s ease-in-out infinite;
 }
 
+/* Asset-type filter bar above the watchlist rows (reuses .range-tab pills). */
+.watch-filter {
+    display: flex;
+    gap: 6px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
 /* ----------------------------- search ------------------------------- */
 
 /* Compact search bar that floats its results in a dropdown so the

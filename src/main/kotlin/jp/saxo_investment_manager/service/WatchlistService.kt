@@ -7,6 +7,7 @@ import jp.saxo_investment_manager.api.SignalDirection
 import jp.saxo_investment_manager.api.Signals
 import jp.saxo_investment_manager.api.WatchlistEntryDto
 import jp.saxo_investment_manager.fundamentals.FundamentalsProvider
+import jp.saxo_investment_manager.market.MarketCalendar
 import jp.saxo_investment_manager.signals.SignalEngine
 import jp.saxo_investment_manager.saxo.ChartClient
 import jp.saxo_investment_manager.saxo.ChartSample
@@ -15,6 +16,9 @@ import jp.saxo_investment_manager.saxo.PricingClient
 import jp.saxo_investment_manager.watchlist.WatchlistItem
 import jp.saxo_investment_manager.watchlist.WatchlistRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Service
 
@@ -30,6 +34,7 @@ class WatchlistService(
     private val pricingClient: PricingClient,
     private val chartClient: ChartClient,
     private val fundamentalsProvider: FundamentalsProvider,
+    private val marketCalendar: MarketCalendar,
 ) {
 
     /** Company fundamentals for a watchlist item (live from FMP; Saxo has no fundamentals API). */
@@ -60,7 +65,16 @@ class WatchlistService(
             .flatMap { (assetType, group) -> pricingClient.getInfoPrices(group.map { it.uic }, assetType) }
             .associateBy { it.uic }
 
-        return items.map { it.toDto(pricesByUic[it.uic]) }
+        // Instruments the account cannot get a live quote for (e.g. equities in sim) still have
+        // chart history, so fall back to the most recent daily close. Fetched concurrently.
+        return coroutineScope {
+            items.map { item ->
+                async {
+                    val dto = item.toDto(pricesByUic[item.uic], marketCalendar)
+                    if (dto.priceAvailable) dto else dto.copy(lastClose = lastCloseFor(item))
+                }
+            }.awaitAll()
+        }
     }
 
     /**
@@ -69,7 +83,7 @@ class WatchlistService(
      */
     suspend fun add(uic: Long, assetType: String): WatchlistEntryDto {
         withContext(Dispatchers.IO) { repository.findByUicAndAssetType(uic, assetType) }
-            ?.let { return it.toDto(priceFor(it)) }
+            ?.let { return it.toDto(priceFor(it), marketCalendar) }
 
         val price = pricingClient.getInfoPrices(listOf(uic), assetType).firstOrNull()
         val symbol = price?.displayAndFormat?.symbol ?: uic.toString()
@@ -78,7 +92,7 @@ class WatchlistService(
         val saved = withContext(Dispatchers.IO) {
             repository.save(WatchlistItem(uic = uic, assetType = assetType, symbol = symbol, description = description))
         }
-        return saved.toDto(price)
+        return saved.toDto(price, marketCalendar)
     }
 
     /** Removes an item, or throws [WatchlistItemNotFoundException] if it does not exist. */
@@ -153,6 +167,13 @@ class WatchlistService(
 
     private suspend fun priceFor(item: WatchlistItem): InfoPrice? =
         pricingClient.getInfoPrices(listOf(item.uic), item.assetType).firstOrNull()
+
+    /** Most recent daily close for an instrument, or null if chart history is unavailable. */
+    private suspend fun lastCloseFor(item: WatchlistItem): Double? =
+        runCatching { chartClient.getChart(item.uic, item.assetType, 1440, 1) }
+            .getOrDefault(emptyList())
+            .lastOrNull()
+            ?.toPoint()?.close
 }
 
 /** Direct value if present (securities), otherwise the bid/ask mid (FX and other quote instruments). */
@@ -172,7 +193,7 @@ private fun ChartSample.toPoint() = PricePoint(
 
 class WatchlistItemNotFoundException(id: Long) : RuntimeException("Watchlist item $id was not found")
 
-private fun WatchlistItem.toDto(price: InfoPrice?) = WatchlistEntryDto(
+private fun WatchlistItem.toDto(price: InfoPrice?, calendar: MarketCalendar) = WatchlistEntryDto(
     id = requireNotNull(id) { "Persisted watchlist item must have an id" },
     uic = uic,
     symbol = symbol,
@@ -187,4 +208,6 @@ private fun WatchlistItem.toDto(price: InfoPrice?) = WatchlistEntryDto(
     // A Quote object can come back present-but-empty when the account is not entitled to an
     // instrument's market data (Saxo sets PriceType* to "NoAccess"); treat that as no price.
     priceAvailable = price?.quote?.let { it.mid != null || it.bid != null || it.ask != null } ?: false,
+    exchange = calendar.exchangeName(symbol),
+    marketOpen = calendar.isOpen(symbol, price?.quote?.marketState),
 )

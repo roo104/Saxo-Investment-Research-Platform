@@ -13,10 +13,14 @@ import jp.saxo_investment_manager.saxo.PricingClient
 import jp.saxo_investment_manager.saxo.Quote
 import jp.saxo_investment_manager.api.SignalDirection
 import jp.saxo_investment_manager.fundamentals.FundamentalsProvider
+import jp.saxo_investment_manager.market.MarketCalendar
 import jp.saxo_investment_manager.watchlist.WatchlistItem
 import jp.saxo_investment_manager.watchlist.WatchlistRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -29,7 +33,10 @@ class WatchlistServiceTest {
     private val pricing = mockk<PricingClient>()
     private val chart = mockk<ChartClient>()
     private val fundamentals = mockk<FundamentalsProvider>()
-    private val service = WatchlistService(repository, pricing, chart, fundamentals)
+
+    // Fixed at Monday 2026-07-13 14:00Z: 10:00 in New York, 16:00 in Copenhagen — both open.
+    private val calendar = MarketCalendar(Clock.fixed(Instant.parse("2026-07-13T14:00:00Z"), ZoneId.of("UTC")))
+    private val service = WatchlistService(repository, pricing, chart, fundamentals, calendar)
 
     private fun item(uic: Long, id: Long, assetType: String = "Stock") =
         WatchlistItem(uic = uic, assetType = assetType, symbol = "SYM$uic", description = "Desc $uic", id = id)
@@ -58,6 +65,22 @@ class WatchlistServiceTest {
         val other = result.first { it.uic == 212L }
         assertFalse(other.priceAvailable)
         assertNull(other.mid)
+    }
+
+    @Test
+    fun `list derives market-open from exchange hours when no quote is available`() = runBlocking {
+        // No live quote (the sim NoAccess case for equities) — open/closed must come from the exchange.
+        every { repository.findAll() } returns listOf(
+            WatchlistItem(uic = 211, assetType = "Stock", symbol = "AAPL:xnas", description = "Apple Inc.", id = 1),
+        )
+        coEvery { pricing.getInfoPrices(listOf(211), "Stock") } returns emptyList()
+        coEvery { chart.getChart(211, "Stock", 1440, 1) } returns emptyList()
+
+        val entry = service.list().single()
+
+        assertFalse(entry.priceAvailable)
+        assertEquals("NASDAQ", entry.exchange)
+        assertTrue(entry.marketOpen!!) // 10:00 ET on a Monday is within 09:30–16:00
     }
 
     @Test

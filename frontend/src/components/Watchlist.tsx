@@ -14,12 +14,16 @@ interface Props {
 export function Watchlist({entries, loading, error, streaming, onRemove}: Props) {
     const [selectedId, setSelectedId] = useState<number | null>(null)
 
-    // Keep a valid selection: default to the first entry, and re-point if the selected one disappears.
+    // Show the list alphabetically by company name (the prominent label in each row).
+    const sorted = [...entries].sort((a, b) =>
+        a.description.localeCompare(b.description, undefined, {sensitivity: 'base'}))
+
+    // Keep a valid selection: default to the first visible row, and re-point if the selected one disappears.
     useEffect(() => {
-        if (entries.length === 0) {
+        if (sorted.length === 0) {
             setSelectedId(null)
-        } else if (selectedId == null || !entries.some((e) => e.id === selectedId)) {
-            setSelectedId(entries[0].id)
+        } else if (selectedId == null || !sorted.some((e) => e.id === selectedId)) {
+            setSelectedId(sorted[0].id)
         }
     }, [entries, selectedId])
 
@@ -40,7 +44,7 @@ export function Watchlist({entries, loading, error, streaming, onRemove}: Props)
                 {error && <div className="banner">{error}</div>}
 
                 <div className="rows">
-                    {entries.map((e) => (
+                    {sorted.map((e) => (
                         <WatchRow key={e.id} entry={e} selected={e.id === selectedId} onSelect={setSelectedId}
                                   onRemove={onRemove}/>
                     ))}

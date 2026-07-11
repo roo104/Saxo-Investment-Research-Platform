@@ -45,6 +45,12 @@ data class WatchlistEntryDto(
     val delayedByMinutes: Int?,
     @get:Schema(description = "False when no live quote could be retrieved for this instrument")
     val priceAvailable: Boolean,
+    @get:Schema(description = "Most recent daily close, used as a fallback when no live quote is available")
+    val lastClose: Double? = null,
+    @get:Schema(description = "Exchange the instrument trades on, if known", example = "NASDAQ")
+    val exchange: String? = null,
+    @get:Schema(description = "Whether that market is currently open; null when it can't be determined")
+    val marketOpen: Boolean? = null,
 )
 
 @Schema(description = "Request to add an instrument to the watchlist.")
@@ -92,6 +98,10 @@ data class PriceTick(
     val marketState: String?,
     val lastUpdated: String?,
     val priceAvailable: Boolean,
+    @get:Schema(description = "Exchange the instrument trades on, if known", example = "NASDAQ")
+    val exchange: String? = null,
+    @get:Schema(description = "Whether that market is currently open; null when it can't be determined")
+    val marketOpen: Boolean? = null,
 )
 
 @Schema(description = "A streamed chart update: a full candle set (snapshot=true) or the candles " +

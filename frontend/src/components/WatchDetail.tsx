@@ -3,6 +3,7 @@ import type {PricePoint, WatchlistEntry} from '../types'
 import {PriceChart, type ChartMode} from './PriceChart'
 import {Fundamentals} from './Fundamentals'
 import {Signals} from './Signals'
+import {MarketBadge} from './MarketBadge'
 
 const RANGES = [
     {key: '1m', horizon: 1, count: 120},
@@ -19,8 +20,8 @@ function fmt(value: number | null): string {
 /** The detail frame — shows a single selected instrument with its chart, fundamentals and signals. */
 export function WatchDetail({entry, onRemove}: { entry: WatchlistEntry; onRemove: (id: number) => void }) {
     const [view, setView] = useState<'chart' | 'fundamentals' | 'signals'>('chart')
-    const [range, setRange] = useState<(typeof RANGES)[number]['key']>('1m')
-    const [mode, setMode] = useState<ChartMode>('line')
+    const [range, setRange] = useState<(typeof RANGES)[number]['key']>('1D')
+    const [mode, setMode] = useState<ChartMode>('candles')
     const [candles, setCandles] = useState<PricePoint[]>([])
     const [loading, setLoading] = useState(false)
     const [streaming, setStreaming] = useState(false)
@@ -71,6 +72,7 @@ export function WatchDetail({entry, onRemove}: { entry: WatchlistEntry; onRemove
                     <span className="desc" title={entry.description}>{entry.description}</span>
                 </div>
                 <div className="detail-head-right">
+                    <MarketBadge entry={entry}/>
                     {entry.priceAvailable ? (
                         <div className="quote">
                             <div className="mid tnum">

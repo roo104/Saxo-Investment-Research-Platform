@@ -3,6 +3,7 @@ package jp.saxo_investment_manager.streaming
 import jp.saxo_investment_manager.api.PriceTick
 import jp.saxo_investment_manager.config.SaxoProperties
 import jp.saxo_investment_manager.config.SaxoTokenProvider
+import jp.saxo_investment_manager.market.MarketCalendar
 import jp.saxo_investment_manager.saxo.InfoPrice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +49,7 @@ class SaxoPriceStream(
     private val tokenProvider: SaxoTokenProvider,
     private val properties: SaxoProperties,
     private val objectMapper: ObjectMapper,
+    private val marketCalendar: MarketCalendar,
 ) : DisposableBean {
     private val log = LoggerFactory.getLogger(javaClass)
     private val contextId = "sim" + UUID.randomUUID().toString().replace("-", "").take(40)
@@ -186,6 +188,7 @@ class SaxoPriceStream(
     private fun buildTick(sub: Sub): PriceTick {
         val info = objectMapper.treeToValue(sub.state, InfoPrice::class.java)
         val q = info.quote
+        val symbol = info.displayAndFormat?.symbol ?: ""
         return PriceTick(
             uic = sub.uic,
             assetType = sub.assetType,
@@ -196,6 +199,8 @@ class SaxoPriceStream(
             marketState = q?.marketState,
             lastUpdated = info.lastUpdated,
             priceAvailable = q?.let { it.mid != null || it.bid != null || it.ask != null } ?: false,
+            exchange = marketCalendar.exchangeName(symbol),
+            marketOpen = marketCalendar.isOpen(symbol, q?.marketState),
         )
     }
 

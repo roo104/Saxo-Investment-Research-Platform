@@ -28,10 +28,41 @@
 
     --radius: 10px;
     --shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.7);
+
+    /* Render native scrollbars and form controls in dark mode across browsers. */
+    color-scheme: dark;
+    /* Firefox scrollbar: thin, thumb over track. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-bright) var(--bg);
 }
 
 * {
     box-sizing: border-box;
+}
+
+/* WebKit/Blink (Chrome, Safari, Edge) scrollbars. */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-bright);
+    border-radius: 999px;
+    /* Inset the thumb so it reads as a rounded pill on the track. */
+    border: 3px solid var(--bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-faint);
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--bg);
 }
 
 html,
@@ -450,6 +481,61 @@ body {
     font-size: 12px;
     color: var(--text-faint);
     font-style: italic;
+}
+
+/* Fallback last-close price: dimmer than a live quote, with a small tag. */
+.quote .mid:has(.close-tag) {
+    color: var(--text-faint);
+    font-weight: 500;
+}
+
+.quote .close-tag {
+    font-family: var(--font-ui);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+/* exchange open/closed badge */
+.mkt-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 8px;
+    white-space: nowrap;
+}
+
+.quote .mkt-badge {
+    margin-top: 6px;
+}
+
+.mkt-badge.is-open {
+    color: var(--up);
+    border-color: color-mix(in srgb, var(--up) 40%, transparent);
+}
+
+.mkt-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-faint);
+}
+
+.mkt-badge.is-open .mkt-dot {
+    background: var(--up);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--up) 22%, transparent);
 }
 
 .quote .state {

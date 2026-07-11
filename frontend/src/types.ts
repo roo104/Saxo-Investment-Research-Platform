@@ -23,6 +23,9 @@ export interface WatchlistEntry {
     marketState: string | null
     delayedByMinutes: number | null
     priceAvailable: boolean
+    lastClose: number | null
+    exchange: string | null
+    marketOpen: boolean | null
 }
 
 export interface EnvironmentInfo {
@@ -87,6 +90,8 @@ export interface PriceTick {
     marketState: string | null
     lastUpdated: string | null
     priceAvailable: boolean
+    exchange: string | null
+    marketOpen: boolean | null
 }
 
 export type SignalDirection = 'BULLISH' | 'BEARISH' | 'NEUTRAL'

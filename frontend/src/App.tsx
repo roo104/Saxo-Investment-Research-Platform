@@ -53,6 +53,8 @@ export default function App() {
                             mid: t.mid,
                             marketState: t.marketState,
                             priceAvailable: t.priceAvailable,
+                            marketOpen: t.marketOpen,
+                            exchange: e.exchange ?? t.exchange,
                             currency: e.currency ?? t.currency
                         }
                         : e,

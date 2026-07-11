@@ -13,7 +13,7 @@ function fmtDate(iso: string): string {
 }
 
 function fmtTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    return new Date(iso).toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false})
 }
 
 export type ChartMode = 'line' | 'candles'

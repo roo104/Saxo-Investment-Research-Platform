@@ -11,8 +11,8 @@ choose which at startup. It ships configured for simulation with a developer-por
 The included sample feature is **instrument search + a live-quote watchlist**: search the Saxo
 universe, pin instruments to a persisted watchlist, watch their bid/ask/mid update **live** (Saxo
 WebSocket streaming, pushed to the browser over Server-Sent Events), and expand any row to see a
-**price-history chart** (OHLC candles from Saxo, rendered as a line + area chart with selectable
-1W / 1M / 3M ranges).
+**price-history chart** (live-streaming OHLC candles from Saxo, as a line or candlestick view with
+1m / 1D / 1W / 1M ranges), plus a **fundamentals** view (key stats + financials — see the note below).
 
 > The longer-term vision — everything this could become as a mini retail investing tool, with a
 > status marker for what's built vs. planned — lives in **[`FEATURES.md`](FEATURES.md)**.
@@ -71,14 +71,15 @@ changing configuration and restarting — there is no runtime toggle that could 
 
 All configuration is read from environment variables (see `src/main/resources/application.yml`):
 
-| Variable           | Default                                                          | Purpose                                 |
-|--------------------|------------------------------------------------------------------|-----------------------------------------|
-| `SAXO_ENV`         | `simulation`                                                     | Active environment: `simulation`/`live` |
-| `SAXO_SIM_TOKEN`   | *(empty)*                                                        | Bearer token for simulation             |
-| `SAXO_LIVE_TOKEN`  | *(empty)*                                                        | Bearer token for live                   |
-| `SAXO_DB_URL`      | `jdbc:mysql://localhost:3306/saxo?createDatabaseIfNotExist=true` | JDBC URL                                |
-| `SAXO_DB_USER`     | `saxo`                                                           | DB user                                 |
-| `SAXO_DB_PASSWORD` | `saxo`                                                           | DB password                             |
+| Variable           | Default                                                          | Purpose                                                                       |
+|--------------------|------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| `SAXO_ENV`         | `simulation`                                                     | Active environment: `simulation`/`live`                                       |
+| `SAXO_SIM_TOKEN`   | *(empty)*                                                        | Bearer token for simulation                                                   |
+| `SAXO_LIVE_TOKEN`  | *(empty)*                                                        | Bearer token for live                                                         |
+| `SAXO_DB_URL`      | `jdbc:mysql://localhost:3306/saxo?createDatabaseIfNotExist=true` | JDBC URL                                                                      |
+| `SAXO_DB_USER`     | `saxo`                                                           | DB user                                                                       |
+| `SAXO_DB_PASSWORD` | `saxo`                                                           | DB password                                                                   |
+| `FMP_API_KEY`      | *(empty)*                                                        | Financial Modeling Prep key — **required**; the app fails to start without it |
 
 Tokens are never committed and never written to disk by the app.
 
@@ -129,16 +130,17 @@ then restart. The environment badge turns red to make the active environment unm
 
 ## REST API
 
-| Method & path                     | Description                                                  |
-|-----------------------------------|--------------------------------------------------------------|
-| `GET /api/instruments`            | Search instruments (`keywords`, `assetTypes`, `exchangeId`)  |
-| `GET /api/watchlist`              | List watchlist entries with their latest quotes              |
-| `POST /api/watchlist`             | Add an instrument `{ "uic": 211, "assetType": "Stock" }`     |
-| `DELETE /api/watchlist/{id}`      | Remove a watchlist entry                                     |
-| `GET /api/watchlist/{id}/history` | OHLC price candles (`horizon` minutes, `count`) for charting |
-| `GET /api/watchlist/stream`       | **SSE** stream of live prices for watchlist instruments      |
-| `GET /api/watchlist/{id}/chart/stream` | **SSE** stream of live OHLC candles (`horizon`, `count`) |
-| `GET /api/environment`            | The active Saxo environment                                  |
+| Method & path                          | Description                                                  |
+|----------------------------------------|--------------------------------------------------------------|
+| `GET /api/instruments`                 | Search instruments (`keywords`, `assetTypes`, `exchangeId`)  |
+| `GET /api/watchlist`                   | List watchlist entries with their latest quotes              |
+| `POST /api/watchlist`                  | Add an instrument `{ "uic": 211, "assetType": "Stock" }`     |
+| `DELETE /api/watchlist/{id}`           | Remove a watchlist entry                                     |
+| `GET /api/watchlist/{id}/history`      | OHLC price candles (`horizon` minutes, `count`) for charting |
+| `GET /api/watchlist/stream`            | **SSE** stream of live prices for watchlist instruments      |
+| `GET /api/watchlist/{id}/chart/stream` | **SSE** stream of live OHLC candles (`horizon`, `count`)     |
+| `GET /api/watchlist/{id}/fundamentals` | Company key stats & financials (live from FMP — see note)    |
+| `GET /api/environment`                 | The active Saxo environment                                  |
 
 Errors are returned as RFC-7807 `application/problem+json`. An upstream Saxo error (e.g. an expired
 token) is surfaced with its status and body rather than being swallowed into an empty result.
@@ -167,12 +169,13 @@ src/main/kotlin/jp/saxo_investment_manager/
   config/     SaxoEnvironment, SaxoProperties, SaxoTokenProvider, WebClientConfig, OpenApiConfig
   saxo/       Saxo DTOs + ReferenceDataClient, PricingClient, ChartClient (coroutine WebClient)
   streaming/  StreamingMessageParser (binary frames) + SaxoPriceStream, SaxoChartStream (WS → Flows)
+  fundamentals/ FundamentalsProvider seam + FmpFundamentalsProvider (live data from FMP; no mock fallback)
   watchlist/  WatchlistItem entity + WatchlistRepository (JPA)
   service/    InstrumentService, WatchlistService
-  api/        Controllers (incl. SSE StreamController), API DTOs, RFC-7807 exception handler
+  api/        Controllers (incl. SSE StreamController, FundamentalsController), API DTOs, RFC-7807 exception handler
 frontend/src/
   api.ts, types.ts            typed API client
-  components/                 SearchPanel, Watchlist, WatchRow, PriceChart, EnvironmentBadge
+  components/                 SearchPanel, Watchlist, WatchRow, PriceChart, Fundamentals, EnvironmentBadge
   App.tsx                     orchestration + polling
 ```
 
@@ -185,3 +188,22 @@ the simulation sandbox. Production/live use should implement OAuth 2.0 Authoriza
 and token refresh. The seam already exists: implement `SaxoTokenProvider.accessToken()` (it is a
 `suspend` function, so it can refresh over the network) and register it in place of
 `StaticTokenProvider`. No calling code changes.
+
+## Fundamentals data source
+
+Saxo's OpenAPI does **not** expose company fundamentals (EPS, revenue, financial statements — see
+[Saxo support](https://openapi.help.saxo/hc/en-us/articles/4418418812689-How-do-I-find-fiscal-numbers-like-EPS-EBITDA-etc-on-companies)).
+The **Fundamentals** view (key stats + financials) is served through a `FundamentalsProvider` seam,
+implemented by **`FmpFundamentalsProvider`**. It always serves **live** data or an error — there is
+**no mock/sample fallback**:
+
+- `FMP_API_KEY` is **required**. Without it the **application fails to start** (fail-fast).
+- With a key set, it maps the Saxo symbol to an FMP ticker (US listings map cleanly; some venues get
+  a suffix) and fetches quote/ratios/statements in parallel from
+  [Financial Modeling Prep](https://financialmodelingprep.com) (v3 API).
+- If FMP doesn't recognise the ticker, the endpoint returns **404 Not Found** (no fabricated data).
+
+Non-equity instruments (FX, bonds) report `available = false`. To use a different feed
+(Morningstar/FactSet), implement `FundamentalsProvider` and mark it `@Primary` — no calling-code
+changes. Note FMP's free tier is rate-limited (~250 calls/day) and non-US symbol mapping is
+best-effort (unmapped symbols return 404).

@@ -60,3 +60,18 @@ allOpen {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+// Netty loads native libraries (transport, DNS resolver, etc.) via System.loadLibrary. On JDK 25
+// this triggers "restricted method has been called" warnings unless native access is granted
+// explicitly; the flag opts the unnamed module (Netty is not modularized) in and silences them.
+tasks.withType<org.springframework.boot.gradle.tasks.run.BootRun> {
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+}
+
+// For the packaged executable jar there is no command line to pass flags on, so bake the grant
+// into the manifest instead: `java -jar` honors Enable-Native-Access exactly like the CLI flag.
+tasks.withType<org.springframework.boot.gradle.tasks.bundling.BootJar> {
+    manifest {
+        attributes("Enable-Native-Access" to "ALL-UNNAMED")
+    }
+}

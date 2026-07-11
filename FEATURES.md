@@ -93,12 +93,12 @@ it.
 
 ## 8. Research & screening
 
-| Feature                                         | Status | Notes                                |
-|-------------------------------------------------|--------|--------------------------------------|
-| News feed per instrument                        | ⬜      | Saxo news service group              |
-| Corporate actions, dividends, earnings calendar | ⬜      |                                      |
-| Fundamentals (P/E, market cap, etc.)            | ⬜      | via reference/fundamentals data      |
-| Screener (filter universe by criteria)          | ⬜      | built on instrument search + metrics |
+| Feature                                         | Status | Notes                                                                                                                                                                                                                                                                                                                                                                                                   |
+|-------------------------------------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| News feed per instrument                        | ⬜      | Saxo news service group                                                                                                                                                                                                                                                                                                                                                                                 |
+| Corporate actions, dividends, earnings calendar | ⬜      |                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Fundamentals: key stats & financials view       | ✅      | Key stats + Financials (per year/quarter) UI (`GET /api/watchlist/{id}/fundamentals`). Saxo has **no** fundamentals API, so served via a `FundamentalsProvider` seam: **live data from Financial Modeling Prep** (`FmpFundamentalsProvider`, requires `FMP_API_KEY`). No mock/sample fallback — **app fails to start** without a key, 404 when the symbol is unmapped, `available=false` for non-equity |
+| Screener (filter universe by criteria)          | ⬜      | built on instrument search + metrics                                                                                                                                                                                                                                                                                                                                                                    |
 
 ## 9. Risk & analytics
 

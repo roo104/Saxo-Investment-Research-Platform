@@ -36,7 +36,7 @@ interface Candle {
 
 /**
  * A single-series price chart with two views: a line + area of closes, or OHLC candlesticks
- * (green up / red down). One hue for the line (brand gold), semantic up/down for candles; recessive
+ * (green up / red down). One hue for the line (Saxo blue), semantic up/down for candles; recessive
  * axes; crosshair-and-tooltip hover. When [live], the final candle streams and the right edge tracks
  * the market. Width is measured from the container so the SVG maps 1:1 to pixels.
  */
@@ -116,6 +116,12 @@ export function PriceChart({points, currency, mode = 'line', live}: Props) {
       setHover(Math.max(0, Math.min(candlesData.length - 1, Math.round(ratio * (candlesData.length - 1)))))
   }
 
+    // Evenly spaced axis ticks: ~4 price levels on Y, ~6 time points on X.
+    const yTickN = 4
+    const yTicks = Array.from({length: yTickN + 1}, (_, i) => geometry.min + (i / yTickN) * (geometry.max - geometry.min))
+    const xTickN = Math.min(6, candlesData.length)
+    const xTicks = Array.from({length: xTickN}, (_, i) => Math.round((i * (candlesData.length - 1)) / (xTickN - 1)))
+
   return (
     <div className="chart" ref={wrapRef}>
       <div className="chart-head">
@@ -142,13 +148,19 @@ export function PriceChart({points, currency, mode = 'line', live}: Props) {
       >
         <defs>
           <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="var(--gold)" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--blue)" stopOpacity="0.28"/>
+              <stop offset="100%" stopColor="var(--blue)" stopOpacity="0"/>
           </linearGradient>
         </defs>
 
-        <line className="chart-grid" x1={PAD.left} y1={geometry.y(geometry.max)} x2={geometry.W - PAD.right} y2={geometry.y(geometry.max)} />
-        <line className="chart-grid" x1={PAD.left} y1={geometry.y(geometry.min)} x2={geometry.W - PAD.right} y2={geometry.y(geometry.min)} />
+          {yTicks.map((v, i) => (
+              <line key={`yg${i}`} className="chart-grid" x1={PAD.left} y1={geometry.y(v)} x2={geometry.W - PAD.right}
+                    y2={geometry.y(v)}/>
+          ))}
+          {xTicks.map((idx, i) => (
+              <line key={`xg${i}`} className="chart-grid chart-grid-v" x1={geometry.x(idx)} y1={PAD.top}
+                    x2={geometry.x(idx)} y2={H - PAD.bottom}/>
+          ))}
 
         {isLiveTip && (
           <line className="chart-live-line" x1={PAD.left} y1={lastCoord[1]} x2={geometry.W - PAD.right} y2={lastCoord[1]} />
@@ -188,11 +200,18 @@ export function PriceChart({points, currency, mode = 'line', live}: Props) {
           </>
         )}
 
-        <text className="chart-axis" x={PAD.left - 8} y={geometry.y(geometry.max) + 4} textAnchor="end">{fmtPrice(geometry.max)}</text>
-        <text className="chart-axis" x={PAD.left - 8} y={geometry.y(geometry.min) + 4} textAnchor="end">{fmtPrice(geometry.min)}</text>
-          <text className="chart-axis" x={PAD.left} y={H - 6} textAnchor="start">{candlesData[0].label}</text>
-          <text className="chart-axis" x={geometry.W - PAD.right} y={H - 6}
-                textAnchor="end">{candlesData[candlesData.length - 1].label}</text>
+          {yTicks.map((v, i) => (
+              <text key={`yl${i}`} className="chart-axis" x={PAD.left - 8} y={geometry.y(v) + 4}
+                    textAnchor="end">{fmtPrice(v)}</text>
+          ))}
+          {xTicks.map((idx, i) => {
+              const anchor = i === 0 ? 'start' : i === xTicks.length - 1 ? 'end' : 'middle'
+              return (
+                  <text key={`xl${i}`} className="chart-axis" x={geometry.x(idx)} y={H - 6} textAnchor={anchor}>
+                      {candlesData[idx].label}
+                  </text>
+              )
+          })}
       </svg>
 
       <div className="chart-tip tnum">

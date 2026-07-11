@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PricePoint, WatchlistEntry } from '../types'
 import {PriceChart, type ChartMode} from './PriceChart'
+import {Fundamentals} from './Fundamentals'
 
 const RANGES = [
   { key: '1m', horizon: 1, count: 120 },
@@ -16,6 +17,7 @@ function fmt(value: number | null): string {
 
 export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove: (id: number) => void }) {
   const [expanded, setExpanded] = useState(false)
+    const [view, setView] = useState<'chart' | 'fundamentals'>('chart')
   const [range, setRange] = useState<(typeof RANGES)[number]['key']>('1m')
     const [mode, setMode] = useState<ChartMode>('line')
   const [candles, setCandles] = useState<PricePoint[]>([])
@@ -38,9 +40,9 @@ export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove:
     prevMid.current = entry.mid
   }, [entry.mid])
 
-  // Open a live candle stream while expanded; reconnect when the range changes.
+    // Open a live candle stream while expanded on the chart view; reconnect when the range changes.
   useEffect(() => {
-    if (!expanded) return
+      if (!expanded || view !== 'chart') return
     const r = RANGES.find((x) => x.key === range)!
     setLoading(true)
     setError(null)
@@ -72,7 +74,7 @@ export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove:
       es.close()
       setStreaming(false)
     }
-  }, [expanded, range, entry.id])
+  }, [expanded, view, range, entry.id])
 
   return (
     <div className={`watch-item${expanded ? ' is-open' : ''}`}>
@@ -109,7 +111,18 @@ export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove:
 
       {expanded && (
         <div className="chart-region">
-            <div className="chart-controls">
+            <div className="view-tabs">
+                <button className={`view-tab${view === 'chart' ? ' active' : ''}`}
+                        onClick={() => setView('chart')}>Chart
+                </button>
+                <button className={`view-tab${view === 'fundamentals' ? ' active' : ''}`}
+                        onClick={() => setView('fundamentals')}>Fundamentals
+                </button>
+            </div>
+
+            {view === 'chart' ? (
+                <>
+                    <div className="chart-controls">
                 <div className="range-tabs">
                     {RANGES.map((r) => (
                         <button key={r.key} className={`range-tab${range === r.key ? ' active' : ''}`}
@@ -126,11 +139,16 @@ export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove:
                             onClick={() => setMode('candles')}>Candles
                     </button>
                 </div>
-          </div>
-          {loading && candles.length === 0 && <div className="empty"><span className="spinner" />streaming candles…</div>}
-          {error && <div className="banner">{error}</div>}
-            {candles.length > 0 &&
-                <PriceChart points={candles} currency={entry.currency} mode={mode} live={streaming}/>}
+                    </div>
+                    {loading && candles.length === 0 &&
+                        <div className="empty"><span className="spinner"/>streaming candles…</div>}
+                    {error && <div className="banner">{error}</div>}
+                    {candles.length > 0 &&
+                        <PriceChart points={candles} currency={entry.currency} mode={mode} live={streaming}/>}
+                </>
+            ) : (
+                <Fundamentals id={entry.id}/>
+            )}
         </div>
       )}
     </div>

@@ -11,7 +11,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
  * Boots the full application context against a real MySQL (Testcontainers).
  * Requires a running Docker daemon.
  */
-@SpringBootTest
+@SpringBootTest(properties = ["fundamentals.fmp.api-key=test-context-key"])
 @Testcontainers
 class SaxoInvestmentManagerApplicationTests {
 

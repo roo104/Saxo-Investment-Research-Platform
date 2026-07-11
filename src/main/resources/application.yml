@@ -26,6 +26,12 @@ saxo:
   live:
     token: ${SAXO_LIVE_TOKEN:}
 
+# Fundamentals data source (live only — no mock/sample fallback). FMP_API_KEY is mandatory: the
+# application fails to start without it. Free key at financialmodelingprep.com.
+fundamentals:
+  fmp:
+    api-key: ${FMP_API_KEY:}
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

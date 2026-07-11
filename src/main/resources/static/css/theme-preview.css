@@ -1,0 +1,440 @@
+/*
+ * theme-preview.css — layout for the theme preview page (index.html).
+ * Colors come exclusively from saxo-theme.css tokens; this file only lays out
+ * the page and adds preview-specific components. Base elements (body, a,
+ * .btn-primary, .card) are defined in saxo-theme.css and reused here.
+ */
+
+:root {
+    --preview-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --preview-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--preview-sans);
+    line-height: 1.5;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 40px 24px 72px;
+}
+
+/* ---- header ---- */
+.top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 40px;
+}
+
+.top-title {
+    flex: 1 1 auto;
+}
+
+.mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-link));
+    display: grid;
+    place-items: center;
+    font-family: var(--preview-mono);
+    font-weight: 700;
+    color: var(--color-on-primary);
+    letter-spacing: -0.5px;
+    flex: none;
+}
+
+.top h1 {
+    font-size: 20px;
+    margin: 0;
+    letter-spacing: -0.2px;
+}
+
+.top p {
+    margin: 2px 0 0;
+    color: var(--color-text-muted);
+    font-size: 13px;
+}
+
+.top code, .muted-line code, footer code {
+    font-family: var(--preview-mono);
+    font-size: 0.92em;
+}
+
+.eyebrow {
+    font-family: var(--preview-mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 16px;
+}
+
+section {
+    margin-bottom: 48px;
+}
+
+/* ---- ghost button (complements .btn-primary from the theme) ---- */
+.btn-ghost {
+    font-family: var(--preview-sans);
+    font-size: 13.5px;
+    font-weight: 600;
+    background: transparent;
+    color: var(--color-link);
+    border: 1px solid var(--color-border-strong);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: color 200ms, border-color 200ms;
+}
+
+.btn-ghost:hover {
+    color: var(--color-link-hover);
+    border-color: var(--color-link);
+}
+
+.btn-primary {
+    font-weight: 600;
+    font-size: 13.5px;
+}
+
+.btn-primary:focus-visible,
+.btn-ghost:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--color-link-hover);
+    outline-offset: 2px;
+}
+
+/* ---- swatches ---- */
+.swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.swatch {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--color-surface);
+}
+
+.swatch .chip {
+    height: 60px;
+}
+
+.swatch .meta {
+    padding: 9px 11px;
+}
+
+.swatch .name {
+    font-size: 12.5px;
+    font-weight: 600;
+    display: block;
+}
+
+.swatch .hex {
+    font-family: var(--preview-mono);
+    font-size: 11px;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+/* ---- component grid ---- */
+.cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+.card {
+    padding: 20px;
+}
+
+.card h3 {
+    margin: 0 0 14px;
+    font-size: 14px;
+    letter-spacing: -0.1px;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.muted-line {
+    font-size: 13.5px;
+    margin: 0;
+    color: var(--color-text-muted);
+}
+
+/* ---- alerts ---- */
+.alert {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 13px;
+    border: 1px solid;
+    background: var(--color-surface-alt);
+    margin-bottom: 10px;
+}
+
+.alert:last-child {
+    margin-bottom: 0;
+}
+
+.alert .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex: none;
+}
+
+.alert.info {
+    border-color: var(--color-warning);
+}
+
+.alert.info .dot {
+    background: var(--color-warning);
+}
+
+.alert.ok {
+    border-color: var(--color-success);
+}
+
+.alert.ok .dot {
+    background: var(--color-success);
+}
+
+.alert.err {
+    border-color: var(--color-danger);
+}
+
+.alert.err .dot {
+    background: var(--color-danger);
+}
+
+.alert strong {
+    display: block;
+    font-weight: 600;
+}
+
+.alert span {
+    color: var(--color-text-muted);
+}
+
+/* ---- watchlist panel ---- */
+.panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+
+.panel-head h3 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.panel-head .live {
+    font-family: var(--preview-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.panel-head .live::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.panel-head .live.on {
+    color: var(--color-success);
+}
+
+.panel-head .live.on::before {
+    animation: pulse 2s infinite;
+}
+
+.panel-head .live.connecting {
+    color: var(--color-text-muted);
+}
+
+.panel-head .live.error {
+    color: var(--color-loss);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(7, 165, 59, 0.5);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(7, 165, 59, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(7, 165, 59, 0);
+    }
+}
+
+/* per-tick flash on a row */
+@keyframes flashUp {
+    from {
+        background: rgba(7, 165, 59, 0.18);
+    }
+    to {
+        background: transparent;
+    }
+}
+
+@keyframes flashDown {
+    from {
+        background: rgba(233, 62, 51, 0.18);
+    }
+    to {
+        background: transparent;
+    }
+}
+
+tbody tr.flash-up {
+    animation: flashUp 0.6s ease-out;
+}
+
+tbody tr.flash-down {
+    animation: flashDown 0.6s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .panel-head .live.on::before {
+        animation: none;
+    }
+
+    tbody tr.flash-up, tbody tr.flash-down {
+        animation: none;
+    }
+}
+
+.c-chg.muted, .c-pct .muted {
+    color: var(--color-text-muted);
+}
+
+td.empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 24px 0;
+    font-family: var(--preview-sans);
+}
+
+.scroll {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+thead th {
+    text-align: right;
+    font-family: var(--preview-mono);
+    font-size: 10.5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    font-weight: 500;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+thead th:first-child, tbody td:first-child {
+    text-align: left;
+}
+
+tbody td {
+    padding: 11px 0;
+    border-bottom: 1px solid var(--color-border);
+    font-variant-numeric: tabular-nums;
+    font-family: var(--preview-mono);
+    text-align: right;
+    white-space: nowrap;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.sym {
+    font-family: var(--preview-sans);
+    font-weight: 600;
+}
+
+.sym small {
+    display: block;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-family: var(--preview-sans);
+}
+
+td.spark {
+    width: 96px;
+    padding-right: 4px;
+}
+
+td.spark canvas {
+    vertical-align: middle;
+}
+
+.gain {
+    color: var(--color-gain);
+}
+
+.loss {
+    color: var(--color-loss);
+}
+
+.chg {
+    display: inline-block;
+    min-width: 72px;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 12.5px;
+}
+
+.chg.gain {
+    background: rgba(7, 165, 59, 0.14);
+}
+
+.chg.loss {
+    background: rgba(233, 62, 51, 0.14);
+}
+
+footer {
+    margin-top: 8px;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-family: var(--preview-mono);
+}

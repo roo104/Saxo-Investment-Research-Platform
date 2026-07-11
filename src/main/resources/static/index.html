@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Saxo Investment Manager — Theme</title>
+    <!-- reusable theme tokens (single source of truth) -->
+    <link href="/css/saxo-theme.css?v=2" rel="stylesheet">
+    <!-- page-specific layout for this preview -->
+    <link href="/css/theme-preview.css?v=2" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+    <header class="top">
+        <div class="mark">SX</div>
+        <div class="top-title">
+            <h1>Saxo Investment Manager — Theme</h1>
+            <p>Dark tokens from <code>/css/saxo-theme.css</code> · blue / gray / green / red, no orange</p>
+        </div>
+        <button aria-pressed="false" class="btn-ghost" id="theme-toggle" type="button">Light mode</button>
+    </header>
+
+    <section>
+        <p class="eyebrow">Semantic tokens</p>
+        <div class="swatches">
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-bg)"></div>
+                <div class="meta"><span class="name">bg</span><span class="hex">#0f1420</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-surface)"></div>
+                <div class="meta"><span class="name">surface</span><span class="hex">#161c2b</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-surface-alt)"></div>
+                <div class="meta"><span class="name">surface-alt</span><span class="hex">#1f2740</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-border-strong)"></div>
+                <div class="meta"><span class="name">border-strong</span><span class="hex">#4c5673</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-primary)"></div>
+                <div class="meta"><span class="name">primary</span><span class="hex">#042eab</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-link)"></div>
+                <div class="meta"><span class="name">link</span><span class="hex">#3399dd</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-primary-active)"></div>
+                <div class="meta"><span class="name">primary-active</span><span class="hex">#61affe</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-text)"></div>
+                <div class="meta"><span class="name">text</span><span class="hex">#ededed</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-text-muted)"></div>
+                <div class="meta"><span class="name">text-muted</span><span class="hex">#a1a8b8</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-success)"></div>
+                <div class="meta"><span class="name">success / gain</span><span class="hex">#07a53b</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-danger)"></div>
+                <div class="meta"><span class="name">danger / loss</span><span class="hex">#e93e33</span></div>
+            </div>
+            <div class="swatch">
+                <div class="chip" style="background:var(--color-warning)"></div>
+                <div class="meta"><span class="name">warning*</span><span class="hex">#61affe</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <p class="eyebrow">Components</p>
+        <div class="cols">
+            <div class="card">
+                <h3>Buttons &amp; links</h3>
+                <div class="row" style="margin-bottom:14px">
+                    <button class="btn-primary" type="button">Place order</button>
+                    <button class="btn-ghost" type="button">Cancel</button>
+                </div>
+                <p class="muted-line">
+                    Streaming docs are on the
+                    <a href="https://www.developer.saxo/openapi/learn">Saxo OpenAPI portal</a>.
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>Status messages</h3>
+                <div class="alert info"><span class="dot"></span>
+                    <div><strong>Simulation mode</strong><span>Equity quotes return NoAccess; FX is live.</span></div>
+                </div>
+                <div class="alert ok"><span class="dot"></span>
+                    <div><strong>Order filled</strong><span>2 lots EURUSD at 1.0842.</span></div>
+                </div>
+                <div class="alert err"><span class="dot"></span>
+                    <div><strong>Stream disconnected</strong><span>Reconnecting to chart feed…</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <p class="eyebrow">In context</p>
+        <div class="card">
+            <div class="panel-head">
+                <h3>Watchlist</h3>
+                <span class="live connecting" id="live">Loading…</span>
+            </div>
+            <div class="scroll">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Instrument</th>
+                        <th>Last</th>
+                        <th>Change</th>
+                        <th>%</th>
+                        <th>Trend</th>
+                    </tr>
+                    </thead>
+                    <tbody id="rows"></tbody>
+                </table>
+            </div>
+        </div>
+        <footer>live · GET /api/watchlist + /api/watchlist/stream · change shown since page open</footer>
+    </section>
+</div>
+
+<script defer src="/js/theme-preview.js?v=2"></script>
+</body>
+</html>

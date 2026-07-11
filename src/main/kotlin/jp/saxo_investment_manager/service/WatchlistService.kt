@@ -1,8 +1,10 @@
 package jp.saxo_investment_manager.service
 
+import jp.saxo_investment_manager.api.Fundamentals
 import jp.saxo_investment_manager.api.PriceHistoryDto
 import jp.saxo_investment_manager.api.PricePoint
 import jp.saxo_investment_manager.api.WatchlistEntryDto
+import jp.saxo_investment_manager.fundamentals.FundamentalsProvider
 import jp.saxo_investment_manager.saxo.ChartClient
 import jp.saxo_investment_manager.saxo.ChartSample
 import jp.saxo_investment_manager.saxo.InfoPrice
@@ -24,7 +26,15 @@ class WatchlistService(
     private val repository: WatchlistRepository,
     private val pricingClient: PricingClient,
     private val chartClient: ChartClient,
+    private val fundamentalsProvider: FundamentalsProvider,
 ) {
+
+    /** Company fundamentals for a watchlist item (live from FMP; Saxo has no fundamentals API). */
+    suspend fun fundamentals(id: Long): Fundamentals {
+        val item = withContext(Dispatchers.IO) { repository.findById(id) }
+            .orElseThrow { WatchlistItemNotFoundException(id) }
+        return fundamentalsProvider.fundamentals(item.uic, item.assetType, item.symbol, item.description)
+    }
 
     /** The (uic, assetType) of every watchlist item — used to set up price-stream subscriptions. */
     suspend fun instruments(): List<Pair<Long, String>> =

@@ -47,6 +47,36 @@ export interface PriceHistory {
     points: PricePoint[]
 }
 
+export interface KeyStat {
+    label: string
+    value: string
+}
+
+export interface FinancialRow {
+    label: string
+    values: (string | null)[]
+}
+
+export interface FinancialSection {
+    title: string
+    rows: FinancialRow[]
+}
+
+export interface FinancialStatements {
+    periods: string[]
+    sections: FinancialSection[]
+}
+
+export interface Fundamentals {
+    symbol: string
+    name: string
+    currency: string
+    available: boolean
+    keyStats: KeyStat[]
+    perYear: FinancialStatements
+    perQuarter: FinancialStatements
+}
+
 export interface PriceTick {
     uic: number
     assetType: string

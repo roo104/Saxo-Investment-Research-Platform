@@ -1,0 +1,148 @@
+/*
+ * Saxo theme (dark) — color tokens derived from the Saxo OpenAPI Developer Portal
+ * (https://www.developer.saxo/openapi/learn).
+ *
+ * Layer 1: raw palette (--saxo-*) — the literal hex values pulled from the portal,
+ *          plus a blue-tinted dark surface scale (--saxo-ink-*) added for the dark
+ *          theme so backgrounds stay in the Saxo blue family rather than flat gray.
+ * Layer 2: semantic tokens (--color-*) — role-based aliases mapped for DARK by
+ *          default. Reference THESE in components.
+ *
+ * A light override is provided under :root[data-theme="light"].
+ */
+
+:root {
+    /* ----- Layer 1: raw palette (from the portal) ----- */
+
+    /* Blues */
+    --saxo-blue: #042eab; /* primary brand / buttons */
+    --saxo-blue-dark: #032179;
+    --saxo-blue-darkest: #002751;
+    --saxo-blue-muted: #325f90;
+    --saxo-link: #3399dd; /* hyperlinks / interactive accent */
+    --saxo-blue-bright: #61affe; /* light blue accent (hover on dark) */
+
+    /* Neutrals */
+    --saxo-black: #211e1e; /* headings, nav text (light theme) */
+    --saxo-white: #ffffff;
+    --saxo-gray-100: #f5f5f5;
+    --saxo-gray-200: #ededed;
+    --saxo-gray-300: #e5e5e5;
+    --saxo-gray-400: #d5d5d5;
+    --saxo-slate-300: #bac3d6;
+    --saxo-slate-500: #a1a8b8;
+    --saxo-slate-600: #4c5673; /* blue-gray, good for dark borders */
+
+    /* Blue-tinted dark surface scale (added for the dark theme) */
+    --saxo-ink-950: #0f1420; /* page background */
+    --saxo-ink-900: #161c2b; /* surface */
+    --saxo-ink-800: #1f2740; /* raised surface */
+    --saxo-ink-700: #2b3452; /* borders */
+
+    /* Status */
+    --saxo-green: #07a53b; /* success / positive */
+    --saxo-green-dark: #05742a;
+    --saxo-red: #e93e33; /* error / negative */
+    --saxo-red-alert: #cb0606; /* alert bar */
+
+    /* ----- Layer 2: semantic tokens (DARK by default) ----- */
+
+    /* Brand */
+    --color-primary: var(--saxo-blue);
+    --color-primary-hover: var(--saxo-link); /* lift lighter on dark */
+    --color-primary-active: var(--saxo-blue-bright);
+    --color-on-primary: var(--saxo-white);
+
+    /* Surfaces */
+    --color-bg: var(--saxo-ink-950);
+    --color-surface: var(--saxo-ink-900);
+    --color-surface-alt: var(--saxo-ink-800);
+    --color-border: var(--saxo-ink-700);
+    --color-border-strong: var(--saxo-slate-600);
+
+    /* Text */
+    --color-text: var(--saxo-gray-200);
+    --color-text-muted: var(--saxo-slate-500);
+    --color-link: var(--saxo-link);
+    --color-link-hover: var(--saxo-blue-bright);
+
+    /* Status (financial: gains green, losses red) */
+    --color-success: var(--saxo-green);
+    --color-success-strong: var(--saxo-green-dark);
+    --color-danger: var(--saxo-red);
+    --color-warning: var(--saxo-blue-bright); /* was amber; now Saxo blue */
+
+    /* Market direction aliases */
+    --color-gain: var(--saxo-green);
+    --color-loss: var(--saxo-red);
+}
+
+/* ----- Optional light override ----- */
+:root[data-theme="light"] {
+    --color-primary: var(--saxo-blue);
+    --color-primary-hover: var(--saxo-blue-dark);
+    --color-primary-active: var(--saxo-blue-darkest);
+    --color-on-primary: var(--saxo-white);
+
+    --color-bg: var(--saxo-white);
+    --color-surface: var(--saxo-gray-100);
+    --color-surface-alt: var(--saxo-gray-200);
+    --color-border: var(--saxo-gray-300);
+    --color-border-strong: var(--saxo-slate-300);
+
+    --color-text: var(--saxo-black);
+    --color-text-muted: var(--saxo-slate-500);
+    --color-link: var(--saxo-link);
+    --color-link-hover: var(--saxo-blue);
+}
+
+/* ----- Base elements ----- */
+
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+a {
+    color: var(--color-link);
+    text-decoration: none;
+    transition: color 200ms;
+}
+
+a:hover {
+    color: var(--color-link-hover);
+}
+
+/* ----- Minimal component helpers ----- */
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 200ms;
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-hover);
+}
+
+.btn-primary:active {
+    background-color: var(--color-primary-active);
+}
+
+.card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+}
+
+.text-gain {
+    color: var(--color-gain);
+}
+
+.text-loss {
+    color: var(--color-loss);
+}

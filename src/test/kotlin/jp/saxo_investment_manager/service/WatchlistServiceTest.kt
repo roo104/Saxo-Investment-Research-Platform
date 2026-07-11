@@ -11,6 +11,7 @@ import jp.saxo_investment_manager.saxo.DisplayAndFormat
 import jp.saxo_investment_manager.saxo.InfoPrice
 import jp.saxo_investment_manager.saxo.PricingClient
 import jp.saxo_investment_manager.saxo.Quote
+import jp.saxo_investment_manager.fundamentals.FundamentalsProvider
 import jp.saxo_investment_manager.watchlist.WatchlistItem
 import jp.saxo_investment_manager.watchlist.WatchlistRepository
 import kotlinx.coroutines.runBlocking
@@ -26,7 +27,8 @@ class WatchlistServiceTest {
     private val repository = mockk<WatchlistRepository>()
     private val pricing = mockk<PricingClient>()
     private val chart = mockk<ChartClient>()
-    private val service = WatchlistService(repository, pricing, chart)
+    private val fundamentals = mockk<FundamentalsProvider>()
+    private val service = WatchlistService(repository, pricing, chart, fundamentals)
 
     private fun item(uic: Long, id: Long, assetType: String = "Stock") =
         WatchlistItem(uic = uic, assetType = assetType, symbol = "SYM$uic", description = "Desc $uic", id = id)

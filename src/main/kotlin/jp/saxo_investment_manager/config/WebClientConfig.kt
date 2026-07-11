@@ -1,6 +1,7 @@
 package jp.saxo_investment_manager.config
 
 import io.netty.channel.ChannelOption
+import jp.saxo_investment_manager.fundamentals.FmpProperties
 import kotlinx.coroutines.reactor.mono
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -18,7 +19,7 @@ import java.time.Duration
  * environment's base URL and automatically attaches the bearer token to every request.
  */
 @Configuration
-@EnableConfigurationProperties(SaxoProperties::class)
+@EnableConfigurationProperties(SaxoProperties::class, FmpProperties::class)
 class WebClientConfig(
     private val properties: SaxoProperties,
     private val tokenProvider: SaxoTokenProvider,

@@ -1180,7 +1180,9 @@ body {
 }
 
 .sig-card.has-tip:hover .sig-tip,
-.sig-card.has-tip:focus-within .sig-tip {
+.sig-card.has-tip:focus-within .sig-tip,
+.sig-legend-item.has-tip:hover .sig-tip,
+.sig-legend-item.has-tip:focus-within .sig-tip {
     opacity: 1;
     transform: translateY(0);
 }
@@ -1275,6 +1277,28 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 5px;
+}
+
+.sig-legend-item.has-tip {
+    position: relative;
+    cursor: help;
+    outline: none;
+}
+
+/* the legend sits near the bottom of the frame, so anchor its tooltip above the item */
+.sig-legend-item .sig-tip {
+    top: auto;
+    bottom: calc(100% + 8px);
+    left: 0;
+    right: auto;
+    width: max-content;
+    max-width: 260px;
+    transform: translateY(4px);
+}
+
+.sig-legend-item.has-tip:hover .sig-tip,
+.sig-legend-item.has-tip:focus-within .sig-tip {
+    transform: translateY(0);
 }
 
 .sig-swatch {

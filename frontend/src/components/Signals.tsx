@@ -33,6 +33,14 @@ const EXPLANATIONS: Record<string, string> = {
         'A 20-period average with bands two standard deviations above and below. Closing above the upper band is a breakout, below the lower band a breakdown; inside the bands is normal volatility.',
 }
 
+// Plain-language explanation for the chart-overlay lines, shown on hover in the legend.
+const OVERLAY_EXPLANATIONS: Record<string, string> = {
+    'Bollinger upper':
+        'The upper Bollinger band — two standard deviations above the 20-period average. It rises and falls with volatility; price closing above it signals an unusually strong move (a breakout) rather than normal fluctuation.',
+    'Bollinger lower':
+        'The lower Bollinger band — two standard deviations below the 20-period average. It widens when volatility grows; price closing below it signals an unusually weak move (a breakdown) rather than normal fluctuation.',
+}
+
 const BIAS_LABEL: Record<SignalDirection, string> = {BULLISH: 'Bullish', BEARISH: 'Bearish', NEUTRAL: 'Neutral'}
 const dirClass = (d: SignalDirection) => (d === 'BULLISH' ? 'sig-bull' : d === 'BEARISH' ? 'sig-bear' : 'sig-neutral')
 const seriesOf = (list: IndicatorSeries[], name: string): (number | null)[] =>
@@ -134,11 +142,16 @@ export function Signals({id, currency}: { id: number; currency: string | null })
 
             <PriceChart points={data.points} currency={currency} mode="line" overlays={overlays}/>
             <div className="sig-legend">
-                {overlays.map((o) => (
-                    <span key={o.name} className="sig-legend-item">
-                        <span className="sig-swatch" style={{background: o.color}}/>{o.name}
-                    </span>
-                ))}
+                {overlays.map((o) => {
+                    const tip = OVERLAY_EXPLANATIONS[o.name]
+                    return (
+                        <span key={o.name} className={`sig-legend-item${tip ? ' has-tip' : ''}`}
+                              tabIndex={tip ? 0 : undefined}>
+                            <span className="sig-swatch" style={{background: o.color}}/>{o.name}
+                            {tip ? <span className="sig-tip" role="tooltip">{tip}</span> : null}
+                        </span>
+                    )
+                })}
             </div>
 
             <RsiPanel values={seriesOf(data.oscillators, 'RSI')}/>

@@ -4,8 +4,8 @@ import type {IndicatorSeries, Signals as SignalsData, SignalDirection} from '../
 import {PriceChart, type ChartOverlay} from './PriceChart'
 import {MacdPanel, RsiPanel} from './Oscillator'
 
-// Signals need enough candles to warm the indicators up (SMA 200 in particular), so the presets
-// request longer series than the live chart does.
+// `count` is the number of candles to display; the backend fetches extra warm-up candles on top
+// so long indicators (SMA 200) are fully formed across the whole window, not just its tail.
 const RANGES = [
     {key: 'Hourly', horizon: 60, count: 400},
     {key: 'Daily', horizon: 1440, count: 250},

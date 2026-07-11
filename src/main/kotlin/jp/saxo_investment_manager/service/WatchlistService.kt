@@ -1,6 +1,7 @@
 package jp.saxo_investment_manager.service
 
 import jp.saxo_investment_manager.api.Fundamentals
+import jp.saxo_investment_manager.api.IndicatorSeries
 import jp.saxo_investment_manager.api.PriceHistoryDto
 import jp.saxo_investment_manager.api.PricePoint
 import jp.saxo_investment_manager.api.SignalDirection
@@ -127,31 +128,43 @@ class WatchlistService(
      * Computes technical trade signals for a watchlist item from its OHLC candles (Saxo exposes no
      * signals endpoint). Candles are mapped to a mid-price series, sorted oldest-first, and fed to
      * the [SignalEngine]. Fewer than two priced candles yields an unavailable result.
+     *
+     * We fetch [SIGNAL_WARMUP] extra candles *before* the requested window so long-lookback
+     * indicators (SMA 200 in particular) are fully formed at the very first displayed candle, then
+     * trim that warm-up prefix off the returned series — otherwise the SMA 200 line would only
+     * appear over the final slice of the chart.
      */
     suspend fun signals(id: Long, horizonMinutes: Int, count: Int): Signals {
         val item = withContext(Dispatchers.IO) { repository.findById(id) }.orElseThrow {
             WatchlistItemNotFoundException(id)
         }
-        val points = chartClient.getChart(item.uic, item.assetType, horizonMinutes, count)
+        val fetchCount = (count + SIGNAL_WARMUP).coerceAtMost(SAXO_MAX_CANDLES)
+        val all = chartClient.getChart(item.uic, item.assetType, horizonMinutes, fetchCount)
             .map { it.toPoint() }
             .filter { it.close != null }
             .sortedBy { it.time }
 
-        if (points.size < 2) {
+        if (all.size < 2) {
             return Signals(
                 symbol = item.symbol,
                 horizonMinutes = horizonMinutes,
                 available = false,
-                asOf = points.lastOrNull()?.time,
+                asOf = all.lastOrNull()?.time,
                 netBias = SignalDirection.NEUTRAL,
                 signals = emptyList(),
-                points = points,
+                points = all,
                 overlays = emptyList(),
                 oscillators = emptyList(),
             )
         }
 
-        val result = SignalEngine.evaluate(points)
+        // Evaluate over the full (warm-up + window) series, then keep only the requested window.
+        // Dropping the same prefix from points and every indicator series preserves their alignment.
+        val result = SignalEngine.evaluate(all)
+        val drop = (all.size - count).coerceAtLeast(0)
+        val points = all.drop(drop)
+        fun trim(series: List<IndicatorSeries>) = series.map { IndicatorSeries(it.name, it.points.drop(drop)) }
+
         return Signals(
             symbol = item.symbol,
             horizonMinutes = horizonMinutes,
@@ -160,8 +173,8 @@ class WatchlistService(
             netBias = result.netBias,
             signals = result.signals,
             points = points,
-            overlays = result.overlays,
-            oscillators = result.oscillators,
+            overlays = trim(result.overlays),
+            oscillators = trim(result.oscillators),
         )
     }
 
@@ -175,6 +188,12 @@ class WatchlistService(
             .lastOrNull()
             ?.toPoint()?.close
 }
+
+/** Extra candles fetched before the display window to warm up the longest indicator (SMA 200). */
+private const val SIGNAL_WARMUP = 200
+
+/** Saxo's `/chart/v3/charts` caps `Count` at 1200 candles per request. */
+private const val SAXO_MAX_CANDLES = 1200
 
 /** Direct value if present (securities), otherwise the bid/ask mid (FX and other quote instruments). */
 private fun mid(direct: Double?, bid: Double?, ask: Double?): Double? = when {

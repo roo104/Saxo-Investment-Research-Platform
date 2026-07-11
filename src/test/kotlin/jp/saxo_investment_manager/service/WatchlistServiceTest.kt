@@ -25,6 +25,7 @@ import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -155,16 +156,22 @@ class WatchlistServiceTest {
     @Test
     fun `signals computes indicators from candles for a rising series`() = runBlocking {
         every { repository.findById(1) } returns Optional.of(item(211, 1))
-        val samples = (1..220).map {
+        // 450 = the 250-candle display window plus the 200 warm-up candles the service requests.
+        val samples = (1..450).map {
             ChartSample(time = "2026-01-%03dT00:00:00Z".format(it), close = Math.pow(1.01, it.toDouble()))
         }
-        coEvery { chart.getChart(211, "Stock", 1440, 250) } returns samples
+        coEvery { chart.getChart(211, "Stock", 1440, 450) } returns samples
 
         val result = service.signals(1, horizonMinutes = 1440, count = 250)
 
         assertTrue(result.available)
         assertEquals(SignalDirection.BULLISH, result.netBias)
-        assertEquals(220, result.points.size)
+        // Only the requested window is returned; the warm-up prefix is trimmed off.
+        assertEquals(250, result.points.size)
+        // SMA 200 is fully formed from the very first displayed candle — the whole point of the warm-up.
+        val sma200 = result.overlays.first { it.name == "SMA 200" }.points
+        assertEquals(250, sma200.size)
+        assertNotNull(sma200.first())
         assertTrue(result.signals.isNotEmpty())
         assertEquals(samples.last().time, result.asOf)
     }
@@ -172,7 +179,7 @@ class WatchlistServiceTest {
     @Test
     fun `signals is unavailable when too few candles come back`() = runBlocking {
         every { repository.findById(1) } returns Optional.of(item(211, 1))
-        coEvery { chart.getChart(211, "Stock", 1440, 250) } returns listOf(
+        coEvery { chart.getChart(211, "Stock", 1440, 450) } returns listOf(
             ChartSample(time = "2026-01-01T00:00:00Z", close = 1.0),
         )
 

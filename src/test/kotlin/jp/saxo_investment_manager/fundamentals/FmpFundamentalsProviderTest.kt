@@ -26,17 +26,18 @@ class FmpFundamentalsProviderTest {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
-                if ("/AAPL" !in path) return json("[]") // FMP only knows AAPL in this test
+                if ("symbol=AAPL" !in path) return json("[]") // FMP only knows AAPL in this test
+                // Stable API: ticker is the `symbol` query param and ratios-ttm must precede ratios.
                 return when {
-                    "/quote/" in path -> json("""[{"name":"Apple Inc.","price":190.0,"pe":30.5,"eps":6.2}]""")
-                    "/ratios-ttm/" in path -> json("""[{"priceToBookRatioTTM":45.0,"dividendYielTTM":0.005,"payoutRatioTTM":0.15}]""")
-                    "/key-metrics-ttm/" in path -> json("""[{"enterpriseValueOverEBITDATTM":22.5}]""")
-                    "/income-statement/" in path -> json(
-                        """[{"date":"2024-09-28","calendarYear":"2024","period":"FY","reportedCurrency":"USD","revenue":391035000000,"ebitda":134661000000,"netIncome":93736000000,"eps":6.11}]""",
+                    "/quote" in path -> json("""[{"symbol":"AAPL","name":"Apple Inc.","price":190.0}]""")
+                    "/ratios-ttm" in path -> json("""[{"priceToEarningsRatioTTM":30.5,"priceToBookRatioTTM":45.0,"dividendYieldTTM":0.005,"dividendPayoutRatioTTM":0.15,"netIncomePerShareTTM":6.2}]""")
+                    "/key-metrics-ttm" in path -> json("""[{"evToEBITDATTM":22.5}]""")
+                    "/income-statement" in path -> json(
+                        """[{"date":"2024-09-28","fiscalYear":"2024","period":"FY","reportedCurrency":"USD","revenue":391035000000,"ebitda":134661000000,"netIncome":93736000000,"eps":6.11}]""",
                     )
 
-                    "/balance-sheet-statement/" in path -> json("""[{"date":"2024-09-28","totalAssets":364980000000,"totalDebt":106629000000}]""")
-                    "/ratios/" in path -> json("""[{"date":"2024-09-28","priceToSalesRatio":9.5,"returnOnEquity":1.57}]""")
+                    "/balance-sheet-statement" in path -> json("""[{"date":"2024-09-28","totalAssets":364980000000,"totalDebt":106629000000,"totalStockholdersEquity":56950000000}]""")
+                    "/ratios" in path -> json("""[{"date":"2024-09-28","priceToSalesRatio":9.5}]""")
                     else -> json("[]")
                 }
             }
@@ -64,6 +65,11 @@ class FmpFundamentalsProviderTest {
         assertEquals(listOf("2024"), f.perYear.periods)
         val revenue = f.perYear.sections.first().rows.first { it.label == "Revenue" }
         assertEquals("391bn USD", revenue.values.single())
+
+        // ROE is derived from the statements (stable /ratios no longer returns it):
+        // netIncome 93.736bn ÷ equity 56.95bn = 164,59%.
+        val roe = f.perYear.sections.last().rows.first { it.label == "Return on equity" }
+        assertEquals("164,59%", roe.values.single())
     }
 
     @Test
@@ -74,12 +80,11 @@ class FmpFundamentalsProviderTest {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
-                if ("/income-statement/" in path) requested += path.substringAfter("/income-statement/")
-                    .substringBefore("?")
+                if ("/income-statement" in path) requested += path.substringAfter("symbol=").substringBefore("&")
                 if ("NOVO-B.CO" !in path) return json("[]")
                 return when {
-                    "/income-statement/" in path -> json(
-                        """[{"date":"2023-12-31","calendarYear":"2023","period":"FY","reportedCurrency":"DKK","revenue":232261000000,"ebitda":110000000000,"netIncome":83683000000,"eps":18.6}]""",
+                    "/income-statement" in path -> json(
+                        """[{"date":"2023-12-31","fiscalYear":"2023","period":"FY","reportedCurrency":"DKK","revenue":232261000000,"ebitda":110000000000,"netIncome":83683000000,"eps":18.6}]""",
                     )
 
                     else -> json("[]")
@@ -105,6 +110,17 @@ class FmpFundamentalsProviderTest {
         // The dispatcher returns "[]" for the income statement of any other ticker.
         val ex = assertFailsWith<ResponseStatusException> {
             provider.fundamentals(999, "Stock", "NOPE:xnas", "Nope")
+        }
+        assertEquals(404, ex.statusCode.value())
+    }
+
+    @Test
+    fun `treats a paid-plan-only symbol (HTTP 402) as a clean 404, not an auth error`() = runBlocking {
+        // On the free tier FMP returns 402 for symbols gated to a paid plan (e.g. non-US listings).
+        // That is a data limitation, not a bad key, so it must surface as a 404 rather than a 502.
+        respondWith(MockResponse().setResponseCode(402))
+        val ex = assertFailsWith<ResponseStatusException> {
+            provider.fundamentals(112, "Stock", "NOVOb:xcse", "Novo Nordisk B")
         }
         assertEquals(404, ex.statusCode.value())
     }
@@ -136,9 +152,9 @@ class FmpFundamentalsProviderTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
                 return when {
-                    "/ratios-ttm/" in path -> MockResponse().setResponseCode(429)
-                    "/income-statement/" in path -> json(
-                        """[{"date":"2024-09-28","calendarYear":"2024","reportedCurrency":"USD","revenue":391035000000,"ebitda":134661000000,"netIncome":93736000000,"eps":6.11}]""",
+                    "/ratios-ttm" in path -> MockResponse().setResponseCode(429)
+                    "/income-statement" in path -> json(
+                        """[{"date":"2024-09-28","fiscalYear":"2024","reportedCurrency":"USD","revenue":391035000000,"ebitda":134661000000,"netIncome":93736000000,"eps":6.11}]""",
                     )
 
                     else -> json("[]")

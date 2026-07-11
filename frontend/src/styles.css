@@ -815,6 +815,10 @@ body {
 }
 
 .banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     margin: 16px 20px;
     padding: 12px 15px;
     border-radius: 8px;
@@ -823,6 +827,23 @@ body {
     color: var(--down);
     font-size: 13px;
     font-family: var(--font-mono);
+}
+
+.banner-retry {
+    flex: none;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--down);
+    background: transparent;
+    color: var(--down);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+
+.banner-retry:hover {
+    background: rgba(240, 115, 111, 0.15);
 }
 
 .footer-note {

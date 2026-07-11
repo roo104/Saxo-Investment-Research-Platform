@@ -158,3 +158,51 @@ it.
 4. **Everything documented via OpenAPI**, everything covered by tests.
 
 > See [`README.md`](README.md) for how to run what exists today.
+
+---
+
+## Appendix: Saxo OpenAPI — full service-group reference
+
+The complete surface the [Saxo OpenAPI](https://www.developer.saxo/openapi/referencedocs) exposes,
+independent of what this platform has built. The API is split into ~17 *service groups*; within each,
+resources are either request/response or **streaming** subscriptions delivered over the streaming
+server (WebSocket). The "Used here" column links back to the sections above.
+
+### Core trading & market data
+
+| Service group                | Key resources / capabilities                                                                                                                                              | Used here            |
+|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|
+| **Root Services** (`root/v1`) | Sessions & session capabilities, trade-session mode (arm for full trading), central subscription management, feature availability, diagnostics                             | ✅ streaming infra    |
+| **Reference Data** (`ref/v1`) | Instruments (details/summaries, search), option roots, option/futures spaces, exchanges, countries, currencies, currency pairs, cultures, languages, time zones, standard dates, algo strategies | ✅ §1 search          |
+| **Trading** (`trade/v1/v2`)   | InfoPrices/Prices (snapshot + streaming quotes, greeks), Orders (market/limit/stop/trailing/OCO/related), Algo orders, Multi-leg option strategies, Options chain, Block orders, Positions (incl. option exercise), Messages, pre-trade disclaimers & return codes | 🟡 §2 prices, §6 planned |
+| **Chart** (`chart/v3`)        | Historical OHLC candles (1m → monthly), snapshot + streaming updates                                                                                                      | ✅ §3 charts          |
+| **Portfolio** (`port/v1`)     | Users, Clients, Accounts, Balances, Positions, NetPositions, ClosedPositions, Orders, Exposure, expandable positions tree                                                  | ⬜ §5 planned         |
+
+### History, reporting & client lifecycle
+
+| Service group          | Key resources / capabilities                                                                                                       | Used here     |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| **Account History** (`hist`) | Performance, Transactions / audit trail, Unsettled amounts                                                                     | ⬜ §5 planned  |
+| **Client Reporting**   | PDF/XLS reports: account statement, portfolio report, trade details, trades executed                                                | ⬜             |
+| **Client Services**    | Audit OrderActivities, partner support cases, reports (aggregated amounts, MiFID 2 cost reporting), subscription mgmt, fund transfers | ⬜             |
+| **Client Management**  | Sign up and manage leads and clients (onboarding)                                                                                   | ⬜             |
+| **Asset Transfers** *(beta)* | Cash transfers, cash withdrawal, prebooked funds, securities transfers, interaccount securities transfer                      | ⬜             |
+| **Corporate Actions** *(licensed)* | Voluntary/mandatory events, elections, standing instructions, proxy voting                                             | ⬜             |
+
+### Notifications, regulatory & value-add
+
+| Service group             | Key resources / capabilities                                                                                                                         | Used here    |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
+| **Event Notification (ENS)** | Streaming client-activity events: orders, positions, position/account depreciation, account funding, margin calls, corporate actions, advisory rebalance, security transfers | ⬜ §7 planned |
+| **Value Add** (`vas/v1`)  | Price alerts, news, forex/economic calendar, and other client-developer extras                                                                        | ⬜ §7/§8      |
+| **Market Overview**       | Market movers — winners/losers by exchange                                                                                                            | ⬜ §8         |
+| **Regulatory Services**   | Client regulatory information                                                                                                                          | ⬜            |
+| **Disclaimer Management** | Manage legal text / notes shown to clients                                                                                                            | ⬜            |
+| **Partner Integration**   | Endpoints for partners integrating with Saxo                                                                                                           | ⬜            |
+
+> **Not offered by Saxo:** there is **no fundamentals / financial-statements endpoint** — that's why
+> §8 sources fundamentals from Financial Modeling Prep, not Saxo. Note also that in **simulation**,
+> entitlements are limited: FX has live streaming prices, equities return `NoAccess`.
+>
+> Source: [Saxo OpenAPI reference docs](https://www.developer.saxo/openapi/referencedocs) ·
+> [service groups](https://www.developer.saxo/openapi/learn/service-groups).

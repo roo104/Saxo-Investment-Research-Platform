@@ -7,6 +7,7 @@ export function Fundamentals({id}: { id: number }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [period, setPeriod] = useState<'year' | 'quarter'>('year')
+    const [attempt, setAttempt] = useState(0)
 
     useEffect(() => {
         let alive = true
@@ -19,10 +20,16 @@ export function Fundamentals({id}: { id: number }) {
         return () => {
             alive = false
         }
-    }, [id])
+    }, [id, attempt])
 
     if (loading) return <div className="empty"><span className="spinner"/>loading fundamentals…</div>
-    if (error) return <div className="banner">{error}</div>
+    if (error)
+        return (
+            <div className="banner">
+                <span>{error}</span>
+                <button className="banner-retry" onClick={() => setAttempt((n) => n + 1)}>Retry</button>
+            </div>
+        )
     if (!data) return null
     if (!data.available) {
         return (

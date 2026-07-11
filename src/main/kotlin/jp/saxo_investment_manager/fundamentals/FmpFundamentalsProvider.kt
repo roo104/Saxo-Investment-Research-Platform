@@ -18,7 +18,7 @@ import tools.jackson.databind.JsonNode
 import java.util.Locale
 
 /**
- * Real fundamentals from [Financial Modeling Prep](https://financialmodelingprep.com) (v3 API).
+ * Real fundamentals from [Financial Modeling Prep](https://financialmodelingprep.com) (stable API).
  *
  * This is the only [FundamentalsProvider]: fundamentals are always live data or an error — the app
  * never serves mock/sample figures. `FMP_API_KEY` is mandatory: if it is missing the application
@@ -76,15 +76,19 @@ class FmpFundamentalsProvider(
     }
 
     private suspend fun fetch(ticker: String, symbol: String, name: String): Fundamentals? = coroutineScope {
-        val quoteD = async { get("/api/v3/quote/$ticker") }
-        val ratiosTtmD = async { get("/api/v3/ratios-ttm/$ticker") }
-        val keyTtmD = async { get("/api/v3/key-metrics-ttm/$ticker") }
-        val incomeYD = async { get("/api/v3/income-statement/$ticker", "period" to "annual", "limit" to "3") }
-        val balanceYD = async { get("/api/v3/balance-sheet-statement/$ticker", "period" to "annual", "limit" to "3") }
-        val ratiosYD = async { get("/api/v3/ratios/$ticker", "period" to "annual", "limit" to "3") }
-        val incomeQD = async { get("/api/v3/income-statement/$ticker", "period" to "quarter", "limit" to "4") }
-        val balanceQD = async { get("/api/v3/balance-sheet-statement/$ticker", "period" to "quarter", "limit" to "4") }
-        val ratiosQD = async { get("/api/v3/ratios/$ticker", "period" to "quarter", "limit" to "4") }
+        val quoteD = async { get("/stable/quote", "symbol" to ticker) }
+        val ratiosTtmD = async { get("/stable/ratios-ttm", "symbol" to ticker) }
+        val keyTtmD = async { get("/stable/key-metrics-ttm", "symbol" to ticker) }
+        val incomeYD =
+            async { get("/stable/income-statement", "symbol" to ticker, "period" to "annual", "limit" to "3") }
+        val balanceYD =
+            async { get("/stable/balance-sheet-statement", "symbol" to ticker, "period" to "annual", "limit" to "3") }
+        val ratiosYD = async { get("/stable/ratios", "symbol" to ticker, "period" to "annual", "limit" to "3") }
+        val incomeQD =
+            async { get("/stable/income-statement", "symbol" to ticker, "period" to "quarter", "limit" to "4") }
+        val balanceQD =
+            async { get("/stable/balance-sheet-statement", "symbol" to ticker, "period" to "quarter", "limit" to "4") }
+        val ratiosQD = async { get("/stable/ratios", "symbol" to ticker, "period" to "quarter", "limit" to "4") }
 
         val income = incomeYD.await()
         if (income == null || !income.isArray || income.isEmpty) return@coroutineScope null // unknown ticker → 404
@@ -94,13 +98,14 @@ class FmpFundamentalsProvider(
         val key = firstObj(keyTtmD.await())
         val ccy = income[0].str("reportedCurrency") ?: "USD"
 
+        // The stable /quote no longer carries eps/pe — those come from the TTM ratios endpoint now.
         val keyStats = buildList {
-            add(quote?.dbl("eps"), "Earnings Per Share (LTM)") { ratio(it) }
-            add(quote?.dbl("pe") ?: ttm?.dbl("peRatioTTM"), "Price / Earnings (LTM)") { ratio(it) }
+            add(ttm?.dbl("netIncomePerShareTTM"), "Earnings Per Share (LTM)") { ratio(it) }
+            add(ttm?.dbl("priceToEarningsRatioTTM"), "Price / Earnings (LTM)") { ratio(it) }
             add(ttm?.dbl("priceToBookRatioTTM"), "Price / Book Value (MRQ)") { ratio(it) }
-            add(ttm?.dbl("dividendYielTTM", "dividendYieldTTM"), "Dividend Yield (LTM)") { pct(it) }
-            add(ttm?.dbl("payoutRatioTTM"), "Dividend Payout Ratio (LTM)") { pct(it) }
-            add(key?.dbl("enterpriseValueOverEBITDATTM"), "Enterprise Value / EBITDA (MRQ / LTM)") { ratio(it) }
+            add(ttm?.dbl("dividendYieldTTM"), "Dividend Yield (LTM)") { pct(it) }
+            add(ttm?.dbl("dividendPayoutRatioTTM"), "Dividend Payout Ratio (LTM)") { pct(it) }
+            add(key?.dbl("evToEBITDATTM"), "Enterprise Value / EBITDA (MRQ / LTM)") { ratio(it) }
         }
 
         Fundamentals(
@@ -109,9 +114,9 @@ class FmpFundamentalsProvider(
             currency = ccy,
             available = true,
             keyStats = keyStats,
-            perYear = statements(income, balanceYD.await(), ratiosYD.await(), ccy) { it.str("calendarYear") ?: "" },
+            perYear = statements(income, balanceYD.await(), ratiosYD.await(), ccy) { it.str("fiscalYear") ?: "" },
             perQuarter = statements(incomeQD.await(), balanceQD.await(), ratiosQD.await(), ccy) {
-                "${it.str("period") ?: ""} ${it.str("calendarYear") ?: ""}".trim()
+                "${it.str("period") ?: ""} ${it.str("fiscalYear") ?: ""}".trim()
             },
         )
     }
@@ -159,7 +164,7 @@ class FmpFundamentalsProvider(
                             aligned.map { (i, _, _) -> i.dbl("eps")?.let { usd(it, ccy) } }),
                         FinancialRow(
                             "Return on equity",
-                            aligned.map { (_, _, r) -> r?.dbl("returnOnEquity")?.let(::pct) }),
+                            aligned.map { (i, b, _) -> roe(i, b)?.let(::pct) }),
                     ),
                 ),
             ),
@@ -167,7 +172,8 @@ class FmpFundamentalsProvider(
     }
 
     // Each endpoint is fetched independently: a data-level HTTP error on one (unknown ticker → 404,
-    // free-tier throttling → 429) returns null instead of throwing. Throwing here would propagate
+    // free-tier throttling → 429, symbols gated to a paid plan such as non-US listings → 402) returns
+    // null instead of throwing — the caller then surfaces a clean 404. Throwing here would propagate
     // out of its `async` and cancel the sibling requests mid-flight, which Reactor Netty logs as a
     // noisy "Rejecting additional inbound receiver" / onErrorDropped. A null income array is treated
     // as "unknown ticker" by the caller and surfaced as a clean 404.
@@ -186,23 +192,34 @@ class FmpFundamentalsProvider(
                 .retrieve()
                 .awaitBody<JsonNode>()
         } catch (e: WebClientResponseException.Unauthorized) {
-            throw ResponseStatusException(
-                HttpStatus.BAD_GATEWAY,
-                "FMP rejected the API key (${e.statusCode}). Check FMP_API_KEY.",
-                e
-            )
+            throw authFailure(path, e)
         } catch (e: WebClientResponseException.Forbidden) {
-            throw ResponseStatusException(
-                HttpStatus.BAD_GATEWAY,
-                "FMP rejected the API key (${e.statusCode}). Check FMP_API_KEY.",
-                e
-            )
+            throw authFailure(path, e)
         } catch (e: WebClientResponseException) {
             log.debug("FMP {} failed: {} {}", path, e.statusCode, e.statusText)
             null
         }
 
+    // A wrong/revoked FMP_API_KEY is a misconfiguration, not missing data, so log it loudly (WARN)
+    // in addition to surfacing it as a 502 — the HTTP access log alone doesn't say *why* it failed.
+    private fun authFailure(path: String, e: WebClientResponseException): ResponseStatusException {
+        log.warn("FMP rejected the API key on {} ({} {}). Check FMP_API_KEY.", path, e.statusCode, e.statusText)
+        return ResponseStatusException(
+            HttpStatus.BAD_GATEWAY,
+            "FMP rejected the API key (${e.statusCode}). Check FMP_API_KEY.",
+            e,
+        )
+    }
+
     private fun firstObj(node: JsonNode?): JsonNode? = node?.takeIf { it.isArray && !it.isEmpty }?.get(0)
+
+    // The stable /ratios endpoint no longer returns returnOnEquity, so derive it from the statements
+    // we already fetch: net income ÷ shareholders' equity for the same period.
+    private fun roe(income: JsonNode, balance: JsonNode?): Double? {
+        val netIncome = income.dbl("netIncome") ?: return null
+        val equity = balance?.dbl("totalStockholdersEquity")?.takeIf { it != 0.0 } ?: return null
+        return netIncome / equity
+    }
 
     private fun JsonNode.dbl(vararg fields: String): Double? =
         fields.firstNotNullOfOrNull { f -> get(f)?.takeIf { !it.isNull && it.isNumber }?.asDouble() }

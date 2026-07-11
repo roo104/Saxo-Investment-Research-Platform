@@ -5,9 +5,6 @@ import {SearchPanel} from './components/SearchPanel'
 import {Watchlist} from './components/Watchlist'
 import type {EnvironmentInfo, Instrument, PriceTick, WatchlistEntry} from './types'
 
-// Live prices arrive over SSE; this slower poll only reconciles list membership and is a fallback.
-const RECONCILE_MS = 15000
-
 export default function App() {
     const [env, setEnv] = useState<EnvironmentInfo | null>(null)
     const [entries, setEntries] = useState<WatchlistEntry[]>([])
@@ -30,11 +27,11 @@ export default function App() {
         }
     }, [])
 
+    // Load once on mount; live prices arrive over SSE and list membership is refreshed
+    // explicitly after adds/removes, so no periodic poll is needed.
     useEffect(() => {
         api.getEnvironment().then(setEnv).catch(() => setEnv(null))
         refresh()
-        const timer = setInterval(refresh, RECONCILE_MS)
-        return () => clearInterval(timer)
     }, [refresh])
 
     // Open an SSE stream of live prices; reconnect whenever the set of instruments changes so newly

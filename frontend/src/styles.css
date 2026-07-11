@@ -159,17 +159,11 @@ body {
 
 /* ----------------------------- layout ------------------------------- */
 
-.grid {
-    display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap: 26px;
-    align-items: start;
-}
-
-@media (max-width: 940px) {
-    .grid {
-        grid-template-columns: 1fr;
-    }
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
 }
 
 .panel {
@@ -233,11 +227,32 @@ body {
 
 /* ----------------------------- search ------------------------------- */
 
+/* Compact search bar that floats its results in a dropdown so the
+   watchlist below can occupy the full width of the page. */
+.searchbar {
+    position: relative;
+}
+
 .search-form {
     display: flex;
     gap: 10px;
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--border);
+    padding: 8px 8px 8px 14px;
+    background: linear-gradient(180deg, var(--bg-elev) 0%, var(--bg) 160%);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    align-items: center;
+}
+
+.search-form:focus-within {
+    border-color: var(--border-bright);
+}
+
+.search-icon {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    color: var(--text-faint);
 }
 
 .search-form input,
@@ -245,26 +260,58 @@ body {
     font-family: var(--font-ui);
     font-size: 14px;
     color: var(--text);
-    background: var(--bg-elev-2);
-    border: 1px solid var(--border-bright);
-    border-radius: 8px;
-    padding: 11px 13px;
+    background: transparent;
+    border: none;
     outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    padding: 9px 4px;
 }
 
 .search-form input {
     flex: 1;
+    min-width: 0;
+}
+
+.search-form select {
+    flex: none;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-bright);
+    border-radius: 999px;
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .search-form input::placeholder {
     color: var(--text-faint);
 }
 
-.search-form input:focus,
 .search-form select:focus {
     border-color: var(--blue);
     box-shadow: 0 0 0 3px var(--blue-dim);
+}
+
+.search-form .btn {
+    flex: none;
+    border-radius: 999px;
+}
+
+/* floating results dropdown */
+.search-results {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: rise 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.search-results .rows {
+    max-height: 52vh;
 }
 
 .btn {

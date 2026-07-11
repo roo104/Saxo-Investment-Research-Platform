@@ -102,7 +102,7 @@ export default function App() {
                 <EnvironmentBadge env={env}/>
             </header>
 
-            <main className="grid">
+            <main className="stack">
                 <SearchPanel onAdd={handleAdd} isOnWatchlist={isOnWatchlist}/>
                 <Watchlist entries={entries} loading={loading} error={error} streaming={streaming}
                            onRemove={handleRemove}/>

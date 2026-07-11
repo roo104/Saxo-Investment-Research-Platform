@@ -166,6 +166,25 @@ body {
     align-items: stretch;
 }
 
+/* master (compact watchlist) + detail (single asset) frame */
+.workspace {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 860px) {
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+}
+
+.workspace .watchlist {
+    position: sticky;
+    top: 20px;
+}
+
 .panel {
     background: linear-gradient(180deg, var(--bg-elev) 0%, var(--bg) 130%);
     border: 1px solid var(--border);
@@ -295,13 +314,9 @@ body {
     border-radius: 999px;
 }
 
-/* floating results dropdown */
+/* results panel — flows inline below the bar, pushing the watchlist down */
 .search-results {
-    position: absolute;
-    z-index: 20;
-    top: calc(100% + 8px);
-    left: 0;
-    right: 0;
+    margin-top: 10px;
     background: var(--bg-elev);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -488,6 +503,53 @@ body {
 .icon-btn:hover {
     color: var(--down);
     background: rgba(240, 115, 111, 0.1);
+}
+
+/* selected row in the master list */
+.watch-row {
+    border-left: 3px solid transparent;
+    cursor: pointer;
+}
+
+.watch-row.is-selected {
+    background: var(--bg-elev-2);
+    border-left-color: var(--blue);
+}
+
+.watch-row.is-selected .sym {
+    color: var(--blue-bright);
+}
+
+/* --------------------------- detail frame --------------------------- */
+
+.detail .chart-region {
+    border-bottom: none;
+    animation: none;
+    padding: 16px 20px 20px;
+}
+
+.detail-title {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.detail-title .desc {
+    max-width: 44ch;
+}
+
+.detail-head-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.detail-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
 }
 
 /* ---------------------- expandable watch row ------------------------ */

@@ -1,10 +1,11 @@
 import {useEffect, useRef, useState} from 'react'
 import type {WatchlistEntry} from '../types'
+import {fmtDecimal} from '../format'
 import {MarketBadge} from './MarketBadge'
 
 function fmt(value: number | null): string {
   if (value == null) return '—'
-  return value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})
+  return fmtDecimal(value)
 }
 
 interface Props {

@@ -4,6 +4,7 @@ import {PriceChart, type ChartMode} from './PriceChart'
 import {Fundamentals} from './Fundamentals'
 import {Signals} from './Signals'
 import {MarketBadge} from './MarketBadge'
+import {fmtDecimal} from '../format'
 
 const RANGES = [
     {key: '1m', horizon: 1, count: 120},
@@ -14,7 +15,7 @@ const RANGES = [
 
 function fmt(value: number | null): string {
     if (value == null) return '—'
-    return value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})
+    return fmtDecimal(value)
 }
 
 /** The detail frame — shows a single selected instrument with its chart, fundamentals and signals. */

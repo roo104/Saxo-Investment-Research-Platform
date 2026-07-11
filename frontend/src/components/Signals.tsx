@@ -3,6 +3,7 @@ import {api, ApiError} from '../api'
 import type {IndicatorSeries, Signals as SignalsData, SignalDirection} from '../types'
 import {PriceChart, type ChartOverlay} from './PriceChart'
 import {MacdPanel, RsiPanel} from './Oscillator'
+import {fmtDecimal} from '../format'
 
 // `count` is the number of candles to display; the backend fetches extra warm-up candles on top
 // so long indicators (SMA 200) are fully formed across the whole window, not just its tail.
@@ -35,6 +36,10 @@ const EXPLANATIONS: Record<string, string> = {
 
 // Plain-language explanation for the chart-overlay lines, shown on hover in the legend.
 const OVERLAY_EXPLANATIONS: Record<string, string> = {
+    'SMA 50':
+        'The 50-period simple moving average — the average closing price over the last 50 periods, redrawn each period. It smooths out short-term noise to show the medium-term trend; price above it is generally a sign of strength, below it of weakness.',
+    'SMA 200':
+        'The 200-period simple moving average — the average closing price over the last 200 periods. It tracks the long-term trend and moves slowly; it often acts as a support or resistance level, and where the 50 sits relative to it defines the golden/death cross.',
     'Bollinger upper':
         'The upper Bollinger band — two standard deviations above the 20-period average. It rises and falls with volatility; price closing above it signals an unusually strong move (a breakout) rather than normal fluctuation.',
     'Bollinger lower':
@@ -45,6 +50,9 @@ const BIAS_LABEL: Record<SignalDirection, string> = {BULLISH: 'Bullish', BEARISH
 const dirClass = (d: SignalDirection) => (d === 'BULLISH' ? 'sig-bull' : d === 'BEARISH' ? 'sig-bear' : 'sig-neutral')
 const seriesOf = (list: IndicatorSeries[], name: string): (number | null)[] =>
     list.find((s) => s.name === name)?.points ?? []
+
+// The raw indicator reading(s), localised: one number for most, "fast / slow" for the SMA cross.
+const fmtSignalValue = (value: number[]): string => value.map((v) => fmtDecimal(v, 4)).join(' / ')
 
 export function Signals({id, currency}: { id: number; currency: string | null }) {
     const [data, setData] = useState<SignalsData | null>(null)
@@ -130,7 +138,8 @@ export function Signals({id, currency}: { id: number; currency: string | null })
                                 <span className="sig-dot"/>
                                 <span className="sig-label">{s.label}</span>
                                 {explanation ? <span className="sig-info" aria-hidden="true">i</span> : null}
-                                {s.value ? <span className="sig-value tnum">{s.value}</span> : null}
+                                {s.value.length ?
+                                    <span className="sig-value tnum">{fmtSignalValue(s.value)}</span> : null}
                             </div>
                             <div className="sig-indicator">{s.indicator}</div>
                             <div className="sig-detail">{s.detail}</div>
@@ -154,11 +163,12 @@ export function Signals({id, currency}: { id: number; currency: string | null })
                 })}
             </div>
 
-            <RsiPanel values={seriesOf(data.oscillators, 'RSI')}/>
+            <RsiPanel values={seriesOf(data.oscillators, 'RSI')} tip={EXPLANATIONS['RSI (14)']}/>
             <MacdPanel
                 macd={seriesOf(data.oscillators, 'MACD')}
                 signal={seriesOf(data.oscillators, 'Signal')}
                 histogram={seriesOf(data.oscillators, 'Histogram')}
+                tip={EXPLANATIONS['MACD (12,26,9)']}
             />
         </div>
     )

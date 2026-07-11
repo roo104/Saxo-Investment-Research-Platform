@@ -12,8 +12,12 @@ data class Signal(
     @get:Schema(description = "Short verdict", example = "Overbought")
     val label: String,
     val direction: SignalDirection,
-    @get:Schema(description = "Formatted metric value, if any", example = "72.4210")
-    val value: String?,
+    @get:Schema(
+        description = "Raw metric value(s), if any — the client localises and formats them. " +
+                "One number for most indicators, two for the SMA cross (fast / slow), empty when none.",
+        example = "[72.421]",
+    )
+    val value: List<Double>,
     @get:Schema(description = "One-line explanation")
     val detail: String,
 )

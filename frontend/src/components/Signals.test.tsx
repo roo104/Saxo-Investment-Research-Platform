@@ -17,12 +17,12 @@ const data: SignalsData = {
     asOf: '2026-07-10T00:00:00Z',
     netBias: 'BULLISH',
     signals: [
-        {indicator: 'RSI (14)', label: 'Overbought', direction: 'BEARISH', value: '74.0000', detail: 'RSI above 70.'},
+        {indicator: 'RSI (14)', label: 'Overbought', direction: 'BEARISH', value: [74], detail: 'RSI above 70.'},
         {
             indicator: 'SMA 50/200',
             label: 'Golden cross',
             direction: 'BULLISH',
-            value: '1 / 2',
+            value: [1, 2],
             detail: 'Crossed above.'
         },
     ],

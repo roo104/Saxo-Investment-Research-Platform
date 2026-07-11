@@ -24,13 +24,17 @@ function linePath(values: (number | null)[], x: (i: number) => number, y: (v: nu
     return d.trim()
 }
 
-export function RsiPanel({values}: { values: (number | null)[] }) {
+export function RsiPanel({values, tip}: { values: (number | null)[]; tip?: string }) {
     if (values.length < 2) return null
     const x = xAt(values.length)
     const y = (v: number) => PAD.top + INNER_H * (1 - v / 100)
     return (
         <div className="osc">
-            <div className="osc-title">RSI (14)</div>
+            <div className={`osc-title${tip ? ' has-tip' : ''}`} tabIndex={tip ? 0 : undefined}>
+                RSI (14)
+                {tip ? <span className="sig-info" aria-hidden="true">i</span> : null}
+                {tip ? <span className="sig-tip" role="tooltip">{tip}</span> : null}
+            </div>
             <svg className="osc-svg" viewBox={`0 0 ${OW} ${OH}`} preserveAspectRatio="none" role="img" aria-label="RSI">
                 <rect className="osc-zone" x={PAD.left} width={INNER_W} y={y(70)} height={y(30) - y(70)}/>
                 {[30, 70].map((g) => (
@@ -45,7 +49,8 @@ export function RsiPanel({values}: { values: (number | null)[] }) {
 }
 
 export function MacdPanel(
-    {macd, signal, histogram}: { macd: (number | null)[]; signal: (number | null)[]; histogram: (number | null)[] },
+    {macd, signal, histogram, tip}:
+    { macd: (number | null)[]; signal: (number | null)[]; histogram: (number | null)[]; tip?: string },
 ) {
     const finite = [...macd, ...signal, ...histogram].filter((v): v is number => v != null && Number.isFinite(v))
     if (macd.length < 2 || finite.length === 0) return null
@@ -56,7 +61,11 @@ export function MacdPanel(
     const zero = y(0)
     return (
         <div className="osc">
-            <div className="osc-title">MACD (12,26,9)</div>
+            <div className={`osc-title${tip ? ' has-tip' : ''}`} tabIndex={tip ? 0 : undefined}>
+                MACD (12,26,9)
+                {tip ? <span className="sig-info" aria-hidden="true">i</span> : null}
+                {tip ? <span className="sig-tip up" role="tooltip">{tip}</span> : null}
+            </div>
             <svg className="osc-svg" viewBox={`0 0 ${OW} ${OH}`} preserveAspectRatio="none" role="img"
                  aria-label="MACD">
                 <line className="osc-guide" x1={PAD.left} x2={OW - PAD.right} y1={zero} y2={zero}/>

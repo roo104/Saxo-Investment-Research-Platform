@@ -1182,9 +1182,30 @@ body {
 .sig-card.has-tip:hover .sig-tip,
 .sig-card.has-tip:focus-within .sig-tip,
 .sig-legend-item.has-tip:hover .sig-tip,
-.sig-legend-item.has-tip:focus-within .sig-tip {
+.sig-legend-item.has-tip:focus-within .sig-tip,
+.osc-title.has-tip:hover .sig-tip,
+.osc-title.has-tip:focus-within .sig-tip,
+.fund-abbr.has-tip:hover .sig-tip,
+.fund-abbr.has-tip:focus-within .sig-tip {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* LTM / MRQ glossary abbreviations in key-stat labels */
+.fund-abbr.has-tip {
+    position: relative;
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--border-bright);
+    outline: none;
+}
+
+.fund-abbr .sig-tip {
+    left: 0;
+    right: auto;
+    width: max-content;
+    max-width: 300px;
 }
 
 .sig-card-head {
@@ -1317,6 +1338,37 @@ body {
 .osc-title {
     font-size: 11px;
     color: var(--text-faint);
+}
+
+.osc-title.has-tip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    align-self: flex-start;
+    cursor: help;
+    outline: none;
+}
+
+/* oscillator tooltips need an explicit width (the title itself is narrow) */
+.osc-title .sig-tip {
+    left: 0;
+    right: auto;
+    width: max-content;
+    max-width: 320px;
+}
+
+/* the MACD panel is the bottom-most element inside the overflow-hidden frame,
+   so open its tooltip upward to keep it from being clipped by the frame edge */
+.osc-title .sig-tip.up {
+    top: auto;
+    bottom: calc(100% + 8px);
+    transform: translateY(4px);
+}
+
+.osc-title.has-tip:hover .sig-tip.up,
+.osc-title.has-tip:focus-within .sig-tip.up {
+    transform: translateY(0);
 }
 
 .osc-svg {

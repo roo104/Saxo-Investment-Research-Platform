@@ -1,11 +1,12 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { PricePoint } from '../types'
+import {fmtDecimal} from '../format'
 
 const H = 220
 const PAD = { top: 14, right: 16, bottom: 22, left: 56 }
 
 function fmtPrice(v: number): string {
-    return v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})
+    return fmtDecimal(v)
 }
 
 function fmtDate(iso: string): string {
@@ -146,7 +147,7 @@ export function PriceChart({points, currency, mode = 'line', live, overlays}: Pr
           {isLiveTip ? <span className="chart-live-tag">LIVE</span> : null}
         </div>
         <div className={`chart-change tnum ${up ? 'up' : 'down'}`}>
-          {up ? '▲' : '▼'} {fmtPrice(Math.abs(change))} ({changePct.toFixed(2)}%)
+            {up ? '▲' : '▼'} {fmtPrice(Math.abs(change))} ({fmtDecimal(changePct)}%)
         </div>
       </div>
 

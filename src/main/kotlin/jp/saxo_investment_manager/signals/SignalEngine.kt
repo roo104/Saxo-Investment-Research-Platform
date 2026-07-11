@@ -7,7 +7,6 @@ import jp.saxo_investment_manager.api.SignalDirection
 import jp.saxo_investment_manager.api.SignalDirection.BEARISH
 import jp.saxo_investment_manager.api.SignalDirection.BULLISH
 import jp.saxo_investment_manager.api.SignalDirection.NEUTRAL
-import java.util.Locale
 
 /** The signals, net bias and chart series produced from one candle series. */
 data class SignalResult(
@@ -66,8 +65,8 @@ object SignalEngine {
         val f = fast.last()
         val s = slow.last()
         if (f == null || s == null)
-            return Signal(name, "Insufficient data", NEUTRAL, null, "Needs 200 candles for the long average.")
-        val value = "${fmt(f)} / ${fmt(s)}"
+            return Signal(name, "Insufficient data", NEUTRAL, emptyList(), "Needs 200 candles for the long average.")
+        val value = listOf(f, s)
         return when {
             crossover(fast, slow) > 0 -> Signal(
                 name,
@@ -92,17 +91,17 @@ object SignalEngine {
 
     private fun priceVsSma(close: Double, sma: Double?): Signal {
         val name = "Price vs SMA 50"
-        if (sma == null) return Signal(name, "Insufficient data", NEUTRAL, null, "Needs 50 candles.")
+        if (sma == null) return Signal(name, "Insufficient data", NEUTRAL, emptyList(), "Needs 50 candles.")
         return if (close >= sma)
-            Signal(name, "Above average", BULLISH, fmt(close), "Price is above its 50-period average.")
+            Signal(name, "Above average", BULLISH, listOf(close), "Price is above its 50-period average.")
         else
-            Signal(name, "Below average", BEARISH, fmt(close), "Price is below its 50-period average.")
+            Signal(name, "Below average", BEARISH, listOf(close), "Price is below its 50-period average.")
     }
 
     private fun rsiSignal(rsi: Double?): Signal {
         val name = "RSI (14)"
-        if (rsi == null) return Signal(name, "Insufficient data", NEUTRAL, null, "Needs 15 candles.")
-        val value = fmt(rsi)
+        if (rsi == null) return Signal(name, "Insufficient data", NEUTRAL, emptyList(), "Needs 15 candles.")
+        val value = listOf(rsi)
         return when {
             rsi >= 70 -> Signal(name, "Overbought", BEARISH, value, "RSI above 70 — stretched to the upside.")
             rsi <= 30 -> Signal(name, "Oversold", BULLISH, value, "RSI below 30 — stretched to the downside.")
@@ -114,8 +113,8 @@ object SignalEngine {
         val name = "MACD (12,26,9)"
         val m = macd.last()
         val s = signal.last()
-        if (m == null || s == null) return Signal(name, "Insufficient data", NEUTRAL, null, "Needs 35 candles.")
-        val value = fmt(m)
+        if (m == null || s == null) return Signal(name, "Insufficient data", NEUTRAL, emptyList(), "Needs 35 candles.")
+        val value = listOf(m)
         return when {
             crossover(macd, signal) > 0 -> Signal(
                 name,
@@ -140,11 +139,17 @@ object SignalEngine {
 
     private fun bollingerSignal(close: Double, upper: Double?, lower: Double?): Signal {
         val name = "Bollinger (20,2)"
-        if (upper == null || lower == null) return Signal(name, "Insufficient data", NEUTRAL, null, "Needs 20 candles.")
+        if (upper == null || lower == null) return Signal(
+            name,
+            "Insufficient data",
+            NEUTRAL,
+            emptyList(),
+            "Needs 20 candles."
+        )
         return when {
-            close > upper -> Signal(name, "Breakout", BULLISH, fmt(close), "Price closed above the upper band.")
-            close < lower -> Signal(name, "Breakdown", BEARISH, fmt(close), "Price closed below the lower band.")
-            else -> Signal(name, "Within bands", NEUTRAL, fmt(close), "Price is inside the Bollinger bands.")
+            close > upper -> Signal(name, "Breakout", BULLISH, listOf(close), "Price closed above the upper band.")
+            close < lower -> Signal(name, "Breakdown", BEARISH, listOf(close), "Price closed below the lower band.")
+            else -> Signal(name, "Within bands", NEUTRAL, listOf(close), "Price is inside the Bollinger bands.")
         }
     }
 
@@ -172,6 +177,4 @@ object SignalEngine {
             else -> NEUTRAL
         }
     }
-
-    private fun fmt(v: Double): String = String.format(Locale.US, "%.4f", v)
 }

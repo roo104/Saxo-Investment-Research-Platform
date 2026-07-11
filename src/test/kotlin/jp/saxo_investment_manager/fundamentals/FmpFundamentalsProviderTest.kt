@@ -1,5 +1,6 @@
 package jp.saxo_investment_manager.fundamentals
 
+import jp.saxo_investment_manager.api.StatUnit
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -58,18 +59,22 @@ class FmpFundamentalsProviderTest {
         assertEquals("Apple Inc.", f.name)
         assertEquals("USD", f.currency)
 
+        // Values are raw numbers tagged with a unit; the client localises and formats them.
         val pe = f.keyStats.first { it.label.startsWith("Price / Earnings") }
-        assertEquals("30,50", pe.value)
-        assertTrue(f.keyStats.any { it.label.startsWith("Enterprise Value") && it.value == "22,50" })
+        assertEquals(30.5, pe.value)
+        assertEquals(StatUnit.RATIO, pe.unit)
+        assertTrue(f.keyStats.any { it.label.startsWith("Enterprise Value") && it.value == 22.5 && it.unit == StatUnit.RATIO })
 
         assertEquals(listOf("2024"), f.perYear.periods)
         val revenue = f.perYear.sections.first().rows.first { it.label == "Revenue" }
-        assertEquals("391bn USD", revenue.values.single())
+        assertEquals(StatUnit.MONEY_BILLIONS, revenue.unit)
+        assertEquals(391035000000.0, revenue.values.single())
 
-        // ROE is derived from the statements (stable /ratios no longer returns it):
-        // netIncome 93.736bn ÷ equity 56.95bn = 164,59%.
+        // ROE is derived from the statements (stable /ratios no longer returns it) and returned as a
+        // raw fraction: netIncome 93.736bn ÷ equity 56.95bn ≈ 1.6459 (→ 164.59% once rendered).
         val roe = f.perYear.sections.last().rows.first { it.label == "Return on equity" }
-        assertEquals("164,59%", roe.values.single())
+        assertEquals(StatUnit.PERCENT, roe.unit)
+        assertEquals(93736000000.0 / 56950000000.0, roe.values.single()!!, 1e-9)
     }
 
     @Test

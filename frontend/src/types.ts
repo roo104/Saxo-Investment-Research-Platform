@@ -50,14 +50,19 @@ export interface PriceHistory {
     points: PricePoint[]
 }
 
+// How a raw numeric fundamentals value should be rendered (mirrors the backend StatUnit enum).
+export type StatUnit = 'RATIO' | 'PERCENT' | 'MONEY' | 'MONEY_BILLIONS'
+
 export interface KeyStat {
     label: string
-    value: string
+    value: number
+    unit: StatUnit
 }
 
 export interface FinancialRow {
     label: string
-    values: (string | null)[]
+    unit: StatUnit
+    values: (number | null)[]
 }
 
 export interface FinancialSection {
@@ -100,7 +105,9 @@ export interface Signal {
     indicator: string
     label: string
     direction: SignalDirection
-    value: string | null
+    // Raw metric value(s); the client localises and formats them. One number for most indicators,
+    // two for the SMA cross (fast / slow), empty when the indicator has no reading.
+    value: number[]
     detail: string
 }
 

@@ -5,6 +5,7 @@ import jp.saxo_investment_manager.api.FinancialSection
 import jp.saxo_investment_manager.api.FinancialStatements
 import jp.saxo_investment_manager.api.Fundamentals
 import jp.saxo_investment_manager.api.KeyStat
+import jp.saxo_investment_manager.api.StatUnit
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.slf4j.LoggerFactory
@@ -15,7 +16,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.server.ResponseStatusException
 import tools.jackson.databind.JsonNode
-import java.util.Locale
 
 /**
  * Real fundamentals from [Financial Modeling Prep](https://financialmodelingprep.com) (stable API).
@@ -99,13 +99,14 @@ class FmpFundamentalsProvider(
         val ccy = income[0].str("reportedCurrency") ?: "USD"
 
         // The stable /quote no longer carries eps/pe — those come from the TTM ratios endpoint now.
+        // Values are raw numbers tagged with a unit; the client localises and formats them.
         val keyStats = buildList {
-            add(ttm?.dbl("netIncomePerShareTTM"), "Earnings Per Share (LTM)") { ratio(it) }
-            add(ttm?.dbl("priceToEarningsRatioTTM"), "Price / Earnings (LTM)") { ratio(it) }
-            add(ttm?.dbl("priceToBookRatioTTM"), "Price / Book Value (MRQ)") { ratio(it) }
-            add(ttm?.dbl("dividendYieldTTM"), "Dividend Yield (LTM)") { pct(it) }
-            add(ttm?.dbl("dividendPayoutRatioTTM"), "Dividend Payout Ratio (LTM)") { pct(it) }
-            add(key?.dbl("evToEBITDATTM"), "Enterprise Value / EBITDA (MRQ / LTM)") { ratio(it) }
+            add(ttm?.dbl("netIncomePerShareTTM"), "Earnings Per Share (LTM)", StatUnit.RATIO)
+            add(ttm?.dbl("priceToEarningsRatioTTM"), "Price / Earnings (LTM)", StatUnit.RATIO)
+            add(ttm?.dbl("priceToBookRatioTTM"), "Price / Book Value (MRQ)", StatUnit.RATIO)
+            add(ttm?.dbl("dividendYieldTTM"), "Dividend Yield (LTM)", StatUnit.PERCENT)
+            add(ttm?.dbl("dividendPayoutRatioTTM"), "Dividend Payout Ratio (LTM)", StatUnit.PERCENT)
+            add(key?.dbl("evToEBITDATTM"), "Enterprise Value / EBITDA (MRQ / LTM)", StatUnit.RATIO)
         }
 
         Fundamentals(
@@ -114,8 +115,8 @@ class FmpFundamentalsProvider(
             currency = ccy,
             available = true,
             keyStats = keyStats,
-            perYear = statements(income, balanceYD.await(), ratiosYD.await(), ccy) { it.str("fiscalYear") ?: "" },
-            perQuarter = statements(incomeQD.await(), balanceQD.await(), ratiosQD.await(), ccy) {
+            perYear = statements(income, balanceYD.await(), ratiosYD.await()) { it.str("fiscalYear") ?: "" },
+            perQuarter = statements(incomeQD.await(), balanceQD.await(), ratiosQD.await()) {
                 "${it.str("period") ?: ""} ${it.str("fiscalYear") ?: ""}".trim()
             },
         )
@@ -125,7 +126,6 @@ class FmpFundamentalsProvider(
         income: JsonNode?,
         balance: JsonNode?,
         ratios: JsonNode?,
-        ccy: String,
         label: (JsonNode) -> String,
     ): FinancialStatements {
         val incomeRows = income?.toList() ?: emptyList()
@@ -141,16 +141,25 @@ class FmpFundamentalsProvider(
                 FinancialSection(
                     "Income statement",
                     listOf(
-                        FinancialRow("Revenue", aligned.map { (i, _, _) -> bn(i.dbl("revenue"), ccy) }),
-                        FinancialRow("EBITDA", aligned.map { (i, _, _) -> bn(i.dbl("ebitda"), ccy) }),
-                        FinancialRow("Net Income", aligned.map { (i, _, _) -> bn(i.dbl("netIncome"), ccy) }),
+                        FinancialRow("Revenue", StatUnit.MONEY_BILLIONS, aligned.map { (i, _, _) -> i.dbl("revenue") }),
+                        FinancialRow("EBITDA", StatUnit.MONEY_BILLIONS, aligned.map { (i, _, _) -> i.dbl("ebitda") }),
+                        FinancialRow(
+                            "Net Income",
+                            StatUnit.MONEY_BILLIONS,
+                            aligned.map { (i, _, _) -> i.dbl("netIncome") }),
                     ),
                 ),
                 FinancialSection(
                     "Balance sheet",
                     listOf(
-                        FinancialRow("Total Assets", aligned.map { (_, b, _) -> bn(b?.dbl("totalAssets"), ccy) }),
-                        FinancialRow("Total Debt", aligned.map { (_, b, _) -> bn(b?.dbl("totalDebt"), ccy) }),
+                        FinancialRow(
+                            "Total Assets",
+                            StatUnit.MONEY_BILLIONS,
+                            aligned.map { (_, b, _) -> b?.dbl("totalAssets") }),
+                        FinancialRow(
+                            "Total Debt",
+                            StatUnit.MONEY_BILLIONS,
+                            aligned.map { (_, b, _) -> b?.dbl("totalDebt") }),
                     ),
                 ),
                 FinancialSection(
@@ -158,13 +167,10 @@ class FmpFundamentalsProvider(
                     listOf(
                         FinancialRow(
                             "Price / Sales",
-                            aligned.map { (_, _, r) -> r?.dbl("priceToSalesRatio")?.let(::ratio) }),
-                        FinancialRow(
-                            "Earnings Per Share",
-                            aligned.map { (i, _, _) -> i.dbl("eps")?.let { usd(it, ccy) } }),
-                        FinancialRow(
-                            "Return on equity",
-                            aligned.map { (i, b, _) -> roe(i, b)?.let(::pct) }),
+                            StatUnit.RATIO,
+                            aligned.map { (_, _, r) -> r?.dbl("priceToSalesRatio") }),
+                        FinancialRow("Earnings Per Share", StatUnit.MONEY, aligned.map { (i, _, _) -> i.dbl("eps") }),
+                        FinancialRow("Return on equity", StatUnit.PERCENT, aligned.map { (i, b, _) -> roe(i, b) }),
                     ),
                 ),
             ),
@@ -227,19 +233,7 @@ class FmpFundamentalsProvider(
     private fun JsonNode.str(field: String): String? = get(field)?.takeIf { !it.isNull }?.asString()
 
     /** Adds a [KeyStat] only when the value is present. */
-    private inline fun MutableList<KeyStat>.add(value: Double?, label: String, format: (Double) -> String) {
-        if (value != null) add(KeyStat(label, format(value)))
+    private fun MutableList<KeyStat>.add(value: Double?, label: String, unit: StatUnit) {
+        if (value != null) add(KeyStat(label, value, unit))
     }
-}
-
-// ---- comma-decimal formatting (European display) ----
-
-private fun cn(v: Double, digits: Int) = String.format(Locale.US, "%.${digits}f", v).replace('.', ',')
-private fun ratio(v: Double) = cn(v, 2)
-private fun pct(fraction: Double) = "${cn(fraction * 100, 2)}%"
-private fun usd(v: Double, ccy: String) = "${cn(v, 2)} $ccy"
-private fun bn(absolute: Double?, ccy: String): String? {
-    if (absolute == null) return null
-    val b = absolute / 1e9
-    return if (kotlin.math.abs(b) >= 100) "${cn(b, 0)}bn $ccy" else "${cn(b, 1)}bn $ccy"
 }

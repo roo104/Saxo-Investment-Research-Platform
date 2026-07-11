@@ -10,12 +10,14 @@ export interface Instrument {
     currencyCode: string | null
 }
 
-export interface WatchlistEntry {
+export interface PortfolioEntry {
     id: number
     uic: number
     symbol: string
     description: string
     assetType: string
+    quantity: number | null
+    openingPrice: number | null
     bid: number | null
     ask: number | null
     mid: number | null
@@ -25,6 +27,7 @@ export interface WatchlistEntry {
     priceAvailable: boolean
     lastClose: number | null
     exchange: string | null
+    country: string | null
     marketOpen: boolean | null
 }
 

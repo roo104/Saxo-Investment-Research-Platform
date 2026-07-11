@@ -8,8 +8,8 @@ visualises it.
 The platform can talk to Saxo's **simulation** sandbox or the **live** brokerage environment; you
 choose which at startup. It ships configured for simulation with a developer-portal 24-hour token.
 
-The included sample feature is **instrument search + a live-quote watchlist**: search the Saxo
-universe, pin instruments to a persisted watchlist, watch their bid/ask/mid update **live** (Saxo
+The included sample feature is **instrument search + a live-quote portfolio**: search the Saxo
+universe, pin instruments to a persisted portfolio, watch their bid/ask/mid update **live** (Saxo
 WebSocket streaming, pushed to the browser over Server-Sent Events), and expand any row to see a
 **price-history chart** (live-streaming OHLC candles from Saxo, as a line or candlestick view with
 1m / 1D / 1W / 1M ranges), plus a **fundamentals** view (key stats + financials — see the note below).
@@ -27,7 +27,7 @@ WebSocket streaming, pushed to the browser over Server-Sent Events), and expand 
         ▼
   Spring WebFlux REST  ──  suspend controllers, OpenAPI / Swagger UI
         │
-     services (Kotlin coroutines)  ──  JPA / MySQL  (watchlist persistence)
+     services (Kotlin coroutines)  ──  JPA / MySQL  (portfolio persistence)
         │
      SaxoClient (WebClient + coroutines)
         │   Authorization: Bearer <token>   ← SaxoTokenProvider
@@ -113,7 +113,7 @@ npm install
 npm run dev        # http://localhost:5173  (proxies /api to :8080)
 ```
 
-Search for an instrument, click **Add**, and watch the quote refresh in the watchlist.
+Search for an instrument, click **Add**, and watch the quote refresh in the portfolio.
 
 > **Tip — market-data entitlements.** A fresh simulation account is typically entitled to FX prices
 > but *not* to live equity/exchange data. Saxo then returns a quote marked `NoAccess`, which the app
@@ -133,13 +133,13 @@ then restart. The environment badge turns red to make the active environment unm
 | Method & path                          | Description                                                  |
 |----------------------------------------|--------------------------------------------------------------|
 | `GET /api/instruments`                 | Search instruments (`keywords`, `assetTypes`, `exchangeId`)  |
-| `GET /api/watchlist`                   | List watchlist entries with their latest quotes              |
-| `POST /api/watchlist`                  | Add an instrument `{ "uic": 211, "assetType": "Stock" }`     |
-| `DELETE /api/watchlist/{id}`           | Remove a watchlist entry                                     |
-| `GET /api/watchlist/{id}/history`      | OHLC price candles (`horizon` minutes, `count`) for charting |
-| `GET /api/watchlist/stream`            | **SSE** stream of live prices for watchlist instruments      |
-| `GET /api/watchlist/{id}/chart/stream` | **SSE** stream of live OHLC candles (`horizon`, `count`)     |
-| `GET /api/watchlist/{id}/fundamentals` | Company key stats & financials (live from FMP — see note)    |
+| `GET /api/portfolio`                   | List portfolio entries with their latest quotes              |
+| `POST /api/portfolio`                  | Add an instrument `{ "uic": 211, "assetType": "Stock" }`     |
+| `DELETE /api/portfolio/{id}`           | Remove a portfolio entry                                     |
+| `GET /api/portfolio/{id}/history`      | OHLC price candles (`horizon` minutes, `count`) for charting |
+| `GET /api/portfolio/stream`            | **SSE** stream of live prices for portfolio instruments      |
+| `GET /api/portfolio/{id}/chart/stream` | **SSE** stream of live OHLC candles (`horizon`, `count`)     |
+| `GET /api/portfolio/{id}/fundamentals` | Company key stats & financials (live from FMP — see note)    |
 | `GET /api/environment`                 | The active Saxo environment                                  |
 
 Errors are returned as RFC-7807 `application/problem+json`. An upstream Saxo error (e.g. an expired
@@ -170,12 +170,12 @@ src/main/kotlin/jp/saxo_investment_manager/
   saxo/       Saxo DTOs + ReferenceDataClient, PricingClient, ChartClient (coroutine WebClient)
   streaming/  StreamingMessageParser (binary frames) + SaxoPriceStream, SaxoChartStream (WS → Flows)
   fundamentals/ FundamentalsProvider seam + FmpFundamentalsProvider (live data from FMP; no mock fallback)
-  watchlist/  WatchlistItem entity + WatchlistRepository (JPA)
-  service/    InstrumentService, WatchlistService
+  portfolio/  PortfolioItem entity + PortfolioRepository (JPA)
+  service/    InstrumentService, PortfolioService
   api/        Controllers (incl. SSE StreamController, FundamentalsController), API DTOs, RFC-7807 exception handler
 frontend/src/
   api.ts, types.ts            typed API client
-  components/                 SearchPanel, Watchlist, WatchRow, PriceChart, Fundamentals, EnvironmentBadge
+  components/                 SearchPanel, Portfolio, PortfolioRow, PriceChart, Fundamentals, EnvironmentBadge
   App.tsx                     orchestration + polling
 ```
 

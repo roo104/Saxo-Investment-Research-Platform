@@ -6,11 +6,13 @@ import {assetLabel} from '../assetTypes'
 const ASSET_TYPES = ['Stock', 'ETF', 'Currency']
 
 interface Props {
-    onAdd: (instrument: Instrument) => Promise<void>
-    isOnWatchlist: (instrument: Instrument) => boolean
+    onAdd: (instrument: Instrument, quantity: number, openingPrice: number) => Promise<void>
+    isOnPortfolio: (instrument: Instrument) => boolean
 }
 
-export function SearchPanel({onAdd, isOnWatchlist}: Props) {
+const resultKey = (i: Instrument) => `${i.uic}-${i.assetType}`
+
+export function SearchPanel({onAdd, isOnPortfolio}: Props) {
     const [keywords, setKeywords] = useState('')
     const [assetType, setAssetType] = useState('Stock')
     const [results, setResults] = useState<Instrument[]>([])
@@ -19,6 +21,10 @@ export function SearchPanel({onAdd, isOnWatchlist}: Props) {
     const [searched, setSearched] = useState(false)
     const [adding, setAdding] = useState<number | null>(null)
     const [open, setOpen] = useState(false)
+    // The result being configured for adding, plus its quantity/opening-price entry (as raw strings).
+    const [expanded, setExpanded] = useState<string | null>(null)
+    const [quantity, setQuantity] = useState('')
+    const [openingPrice, setOpeningPrice] = useState('')
     const rootRef = useRef<HTMLDivElement>(null)
 
     // Close the results dropdown on outside click or Escape.
@@ -58,10 +64,17 @@ export function SearchPanel({onAdd, isOnWatchlist}: Props) {
         }
     }
 
-    async function handleAdd(instrument: Instrument) {
+    function toggleExpand(instrument: Instrument) {
+        setExpanded((current) => (current === resultKey(instrument) ? null : resultKey(instrument)))
+        setQuantity('')
+        setOpeningPrice('')
+    }
+
+    async function handleAdd(instrument: Instrument, qty: number, price: number) {
         setAdding(instrument.uic)
         try {
-            await onAdd(instrument)
+            await onAdd(instrument, qty, price)
+            setExpanded(null)
         } finally {
             setAdding(null)
         }
@@ -101,9 +114,14 @@ export function SearchPanel({onAdd, isOnWatchlist}: Props) {
 
                     <div className="rows">
                         {results.map((r) => {
-                            const added = isOnWatchlist(r)
+                            const added = isOnPortfolio(r)
+                            const isOpen = expanded === resultKey(r)
+                            const qty = Number(quantity)
+                            const price = Number(openingPrice)
+                            const valid = quantity !== '' && openingPrice !== '' &&
+                                Number.isFinite(qty) && qty > 0 && Number.isFinite(price) && price > 0
                             return (
-                                <div className="row result-row" key={`${r.uic}-${r.assetType}`}>
+                                <div className="row result-row" key={resultKey(r)}>
                                     <div>
                                         <div className="sym">{r.symbol}</div>
                                         <div className="desc" title={r.description}>
@@ -113,11 +131,45 @@ export function SearchPanel({onAdd, isOnWatchlist}: Props) {
                                     <span className="tag">{r.exchangeId ?? assetLabel(r.assetType)}</span>
                                     <button
                                         className="btn btn-ghost"
-                                        disabled={added || adding === r.uic}
-                                        onClick={() => handleAdd(r)}
+                                        disabled={added}
+                                        onClick={() => toggleExpand(r)}
                                     >
-                                        {added ? 'On list' : adding === r.uic ? '…' : '+ Add'}
+                                        {added ? 'On list' : isOpen ? 'Cancel' : '+ Add'}
                                     </button>
+
+                                    {isOpen && !added && (
+                                        <form
+                                            className="add-form"
+                                            onSubmit={(e) => {
+                                                e.preventDefault()
+                                                if (valid) handleAdd(r, qty, price)
+                                            }}
+                                        >
+                                            <label className="add-field">
+                                                Quantity
+                                                <input
+                                                    type="number" min="0" step="any" inputMode="decimal"
+                                                    autoFocus placeholder="e.g. 10"
+                                                    value={quantity}
+                                                    onChange={(e) => setQuantity(e.target.value)}
+                                                />
+                                            </label>
+                                            <label className="add-field">
+                                                Opening price
+                                                <input
+                                                    type="number" min="0" step="any" inputMode="decimal"
+                                                    placeholder="per unit"
+                                                    value={openingPrice}
+                                                    onChange={(e) => setOpeningPrice(e.target.value)}
+                                                />
+                                            </label>
+                                            <button className="btn btn-primary" type="submit"
+                                                    disabled={!valid || adding === r.uic}>
+                                                {adding === r.uic ? <span className="spinner"/> : null}
+                                                Add to portfolio
+                                            </button>
+                                        </form>
+                                    )}
                                 </div>
                             )
                         })}

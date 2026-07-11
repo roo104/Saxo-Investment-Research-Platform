@@ -1,18 +1,18 @@
 import {useEffect, useMemo, useState} from 'react'
-import type {WatchlistEntry} from '../types'
+import type {PortfolioEntry} from '../types'
 import {ASSET_FILTERS, type AssetFilter, inCategory} from '../assetTypes'
-import {WatchRow} from './WatchRow'
-import {WatchDetail} from './WatchDetail'
+import {PortfolioRow} from './PortfolioRow'
+import {PortfolioDetail} from './PortfolioDetail'
 
 interface Props {
-    entries: WatchlistEntry[]
+    entries: PortfolioEntry[]
     loading: boolean
     error: string | null
     streaming?: boolean
     onRemove: (id: number) => void
 }
 
-export function Watchlist({entries, loading, error, streaming, onRemove}: Props) {
+export function Portfolio({entries, loading, error, streaming, onRemove}: Props) {
     const [selectedId, setSelectedId] = useState<number | null>(null)
     const [filter, setFilter] = useState<AssetFilter>('Stock')
 
@@ -36,9 +36,9 @@ export function Watchlist({entries, loading, error, streaming, onRemove}: Props)
 
     return (
         <div className="workspace">
-            <section className="panel watchlist">
+            <section className="panel portfolio">
                 <div className="panel-head">
-                    <h2>Watchlist</h2>
+                    <h2>Portfolio</h2>
                     <span className="count">
                         {streaming && entries.length > 0 ? <span className="live-dot" title="Live streaming"/> : null}
                         {loading && entries.length === 0 ? <span className="spinner"/> : null}
@@ -47,7 +47,7 @@ export function Watchlist({entries, loading, error, streaming, onRemove}: Props)
                 </div>
 
                 {entries.length > 0 && (
-                    <div className="watch-filter" role="tablist" aria-label="Filter by asset type">
+                    <div className="portfolio-filter" role="tablist" aria-label="Filter by asset type">
                         {ASSET_FILTERS.map((f) => (
                             <button key={f} role="tab" aria-selected={filter === f}
                                     className={`range-tab${filter === f ? ' active' : ''}`}
@@ -62,7 +62,7 @@ export function Watchlist({entries, loading, error, streaming, onRemove}: Props)
 
                 <div className="rows">
                     {visible.map((e) => (
-                        <WatchRow key={e.id} entry={e} selected={e.id === selectedId} onSelect={setSelectedId}
+                        <PortfolioRow key={e.id} entry={e} selected={e.id === selectedId} onSelect={setSelectedId}
                                   onRemove={onRemove}/>
                     ))}
 
@@ -76,19 +76,19 @@ export function Watchlist({entries, loading, error, streaming, onRemove}: Props)
                     {!loading && entries.length > 0 && visible.length === 0 && (
                         <div className="empty">
                             <span className="big">No matches</span>
-                            No {filter} instruments on your watchlist.
+                            No {filter} instruments on your portfolio.
                         </div>
                     )}
                 </div>
             </section>
 
             {selected ? (
-                <WatchDetail key={selected.id} entry={selected} onRemove={onRemove}/>
+                <PortfolioDetail key={selected.id} entry={selected} onRemove={onRemove}/>
             ) : (
                 <section className="panel detail detail-empty">
                     <div className="empty">
                         <span className="big">No instrument selected</span>
-                        Pick something from your watchlist to see its chart, fundamentals and signals.
+                        Pick something from your portfolio to see its chart, fundamentals and signals.
                     </div>
                 </section>
             )}

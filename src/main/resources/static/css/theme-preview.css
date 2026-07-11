@@ -240,7 +240,7 @@ a:focus-visible {
     color: var(--color-text-muted);
 }
 
-/* ---- watchlist panel ---- */
+/* ---- portfolio panel ---- */
 .panel-head {
     display: flex;
     justify-content: space-between;

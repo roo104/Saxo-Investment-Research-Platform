@@ -22,6 +22,15 @@
     --up: #58d18b;
     --down: #f0736f;
 
+    /* Categorical palette for allocation donuts, applied by descending slice size. Harmonised
+     * around the Saxo blue with enough separation to read as distinct segments; "Others" is muted. */
+    --cat-1: #0091d5;
+    --cat-2: #33aae0;
+    --cat-3: #7fd1f0;
+    --cat-4: #3f6bd6;
+    --cat-5: #8a6fe0;
+    --cat-others: #4a505c;
+
     --font-display: 'Fraunces', Georgia, serif;
     --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
     --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
@@ -197,7 +206,7 @@ body {
     align-items: stretch;
 }
 
-/* master (compact watchlist) + detail (single asset) frame */
+/* master (compact portfolio) + detail (single asset) frame */
 .workspace {
     display: grid;
     grid-template-columns: 300px 1fr;
@@ -211,7 +220,7 @@ body {
     }
 }
 
-.workspace .watchlist {
+.workspace .portfolio {
     position: sticky;
     top: 20px;
 }
@@ -275,18 +284,125 @@ body {
     animation: pulse 1.8s ease-in-out infinite;
 }
 
-/* Asset-type filter bar above the watchlist rows (reuses .range-tab pills). */
-.watch-filter {
+/* Asset-type filter bar above the portfolio rows (reuses .range-tab pills). */
+.portfolio-filter {
     display: flex;
     gap: 6px;
     padding: 12px 20px;
     border-bottom: 1px solid var(--border);
 }
 
+/* ---------------------------- allocation ---------------------------- */
+
+/* Three donut breakdowns (Assets · Country · Currency) side by side, stacking when narrow. */
+.alloc-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+}
+
+@media (max-width: 860px) {
+    .alloc-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.alloc-card {
+    background: var(--bg-elev);
+    padding: 20px 22px 22px;
+}
+
+.alloc-card-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 14px;
+}
+
+.alloc-card-head h3 {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+/* Small "?" affordance carrying a plain-language explanation via its native tooltip. */
+.help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1px solid var(--border-bright);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    cursor: help;
+    outline: none;
+}
+
+.help:hover,
+.help:focus {
+    border-color: var(--blue);
+    color: var(--blue);
+}
+
+.donut {
+    display: block;
+    width: 148px;
+    height: 148px;
+    margin: 0 auto 18px;
+}
+
+.alloc-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.alloc-legend-item {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
+}
+
+.alloc-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.alloc-label {
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.alloc-pct {
+    font-size: 12.5px;
+    color: var(--text);
+}
+
+.alloc-empty {
+    margin: 0;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--text-faint);
+}
+
 /* ----------------------------- search ------------------------------- */
 
 /* Compact search bar that floats its results in a dropdown so the
-   watchlist below can occupy the full width of the page. */
+   portfolio below can occupy the full width of the page. */
 .searchbar {
     position: relative;
 }
@@ -353,7 +469,7 @@ body {
     border-radius: 999px;
 }
 
-/* results panel — flows inline below the bar, pushing the watchlist down */
+/* results panel — flows inline below the bar, pushing the portfolio down */
 .search-results {
     margin-top: 10px;
     background: var(--bg-elev);
@@ -432,7 +548,7 @@ body {
     grid-template-columns: 1fr auto auto;
 }
 
-.watch-row {
+.portfolio-row {
     grid-template-columns: 1fr auto auto;
 }
 
@@ -465,6 +581,47 @@ body {
     border: 1px solid var(--border-bright);
     border-radius: 5px;
     padding: 3px 7px;
+}
+
+/* Inline quantity/opening-price entry revealed under a search result when adding it. */
+.add-form {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.add-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+}
+
+.add-field input {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    padding: 8px 10px;
+    width: 130px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.add-field input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue-dim);
+}
+
+.add-form .btn {
+    margin-left: auto;
 }
 
 .quote {
@@ -600,17 +757,17 @@ body {
 }
 
 /* selected row in the master list */
-.watch-row {
+.portfolio-row {
     border-left: 3px solid transparent;
     cursor: pointer;
 }
 
-.watch-row.is-selected {
+.portfolio-row.is-selected {
     background: var(--bg-elev-2);
     border-left-color: var(--blue);
 }
 
-.watch-row.is-selected .sym {
+.portfolio-row.is-selected .sym {
     color: var(--blue-bright);
 }
 
@@ -646,13 +803,13 @@ body {
     min-height: 320px;
 }
 
-/* ---------------------- expandable watch row ------------------------ */
+/* ---------------------- expandable portfolio row ------------------------ */
 
-.watch-item.is-open {
+.portfolio-item.is-open {
     background: var(--bg-elev-2);
 }
 
-.watch-toggle {
+.portfolio-toggle {
     display: flex;
     align-items: center;
     gap: 11px;
@@ -665,7 +822,7 @@ body {
     color: inherit;
 }
 
-.watch-toggle > span {
+.portfolio-toggle > span {
     min-width: 0;
 }
 

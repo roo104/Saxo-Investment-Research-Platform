@@ -2,12 +2,13 @@ import {useCallback, useEffect, useRef, useState} from 'react'
 import {api, ApiError} from './api'
 import {EnvironmentBadge} from './components/EnvironmentBadge'
 import {SearchPanel} from './components/SearchPanel'
-import {Watchlist} from './components/Watchlist'
-import type {EnvironmentInfo, Instrument, PriceTick, WatchlistEntry} from './types'
+import {AllocationOverview} from './components/AllocationOverview'
+import {Portfolio} from './components/Portfolio'
+import type {EnvironmentInfo, Instrument, PriceTick, PortfolioEntry} from './types'
 
 export default function App() {
     const [env, setEnv] = useState<EnvironmentInfo | null>(null)
-    const [entries, setEntries] = useState<WatchlistEntry[]>([])
+    const [entries, setEntries] = useState<PortfolioEntry[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [streaming, setStreaming] = useState(false)
@@ -15,10 +16,10 @@ export default function App() {
 
     const refresh = useCallback(async () => {
         try {
-            setEntries(await api.getWatchlist())
+            setEntries(await api.getPortfolio())
             setError(null)
         } catch (err) {
-            setError(err instanceof ApiError ? err.message : 'Could not load the watchlist')
+            setError(err instanceof ApiError ? err.message : 'Could not load the portfolio')
         } finally {
             if (!loaded.current) {
                 loaded.current = true
@@ -38,7 +39,7 @@ export default function App() {
     // added items get subscribed. Price ticks are merged into the matching entry by uic + asset type.
     const uicKey = entries.map((e) => `${e.uic}:${e.assetType}`).sort().join(',')
     useEffect(() => {
-        const es = new EventSource('/api/watchlist/stream')
+        const es = new EventSource('/api/portfolio/stream')
         es.onopen = () => setStreaming(true)
         es.onerror = () => setStreaming(false)
         es.addEventListener('price', (ev) => {
@@ -68,8 +69,8 @@ export default function App() {
     }, [uicKey])
 
     const handleAdd = useCallback(
-        async (instrument: Instrument) => {
-            await api.addToWatchlist(instrument.uic, instrument.assetType)
+        async (instrument: Instrument, quantity: number, openingPrice: number) => {
+            await api.addToPortfolio(instrument.uic, instrument.assetType, quantity, openingPrice)
             await refresh()
         },
         [refresh],
@@ -79,7 +80,7 @@ export default function App() {
         async (id: number) => {
             setEntries((prev) => prev.filter((e) => e.id !== id)) // optimistic
             try {
-                await api.removeFromWatchlist(id)
+                await api.removeFromPortfolio(id)
             } finally {
                 refresh()
             }
@@ -87,7 +88,7 @@ export default function App() {
         [refresh],
     )
 
-    const isOnWatchlist = useCallback(
+    const isOnPortfolio = useCallback(
         (i: Instrument) => entries.some((e) => e.uic === i.uic && e.assetType === i.assetType),
         [entries],
     )
@@ -105,8 +106,9 @@ export default function App() {
             </header>
 
             <main className="stack">
-                <SearchPanel onAdd={handleAdd} isOnWatchlist={isOnWatchlist}/>
-                <Watchlist entries={entries} loading={loading} error={error} streaming={streaming}
+                <SearchPanel onAdd={handleAdd} isOnPortfolio={isOnPortfolio}/>
+                {entries.length > 0 && <AllocationOverview entries={entries}/>}
+                <Portfolio entries={entries} loading={loading} error={error} streaming={streaming}
                            onRemove={handleRemove}/>
             </main>
 

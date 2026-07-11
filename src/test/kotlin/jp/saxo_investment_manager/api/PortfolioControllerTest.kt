@@ -2,8 +2,8 @@ package jp.saxo_investment_manager.api
 
 import io.mockk.coEvery
 import io.mockk.mockk
-import jp.saxo_investment_manager.service.WatchlistItemNotFoundException
-import jp.saxo_investment_manager.service.WatchlistService
+import jp.saxo_investment_manager.service.PortfolioItemNotFoundException
+import jp.saxo_investment_manager.service.PortfolioService
 import org.junit.jupiter.api.Test
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest
 import org.springframework.boot.test.context.TestConfiguration
@@ -14,25 +14,29 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
-@WebFluxTest(WatchlistController::class)
-@Import(WatchlistControllerTest.Mocks::class, ApiExceptionHandler::class)
-class WatchlistControllerTest(
+@WebFluxTest(PortfolioController::class)
+@Import(PortfolioControllerTest.Mocks::class, ApiExceptionHandler::class)
+class PortfolioControllerTest(
     @org.springframework.beans.factory.annotation.Autowired val webClient: WebTestClient,
-    @org.springframework.beans.factory.annotation.Autowired val service: WatchlistService,
+    @org.springframework.beans.factory.annotation.Autowired val service: PortfolioService,
 ) {
     @TestConfiguration
     class Mocks {
         @Bean
-        fun watchlistService(): WatchlistService = mockk()
+        fun portfolioService(): PortfolioService = mockk()
     }
 
     @Test
-    fun `returns watchlist entries`() {
+    fun `returns portfolio entries`() {
         coEvery { service.list() } returns listOf(
-            WatchlistEntryDto(1, 211, "AAPL:xnas", "Apple Inc.", "Stock", 1.0, 2.0, 1.5, "USD", "Open", 15, true),
+            PortfolioEntryDto(
+                id = 1, uic = 211, symbol = "AAPL:xnas", description = "Apple Inc.", assetType = "Stock",
+                quantity = 10.0, openingPrice = 180.0, bid = 1.0, ask = 2.0, mid = 1.5, currency = "USD",
+                marketState = "Open", delayedByMinutes = 15, priceAvailable = true,
+            ),
         )
 
-        webClient.get().uri("/api/watchlist").exchange()
+        webClient.get().uri("/api/portfolio").exchange()
             .expectStatus().isOk
             .expectBody()
             .jsonPath("$[0].symbol").isEqualTo("AAPL:xnas")
@@ -41,7 +45,7 @@ class WatchlistControllerTest(
 
     @Test
     fun `add validates the request body`() {
-        webClient.post().uri("/api/watchlist")
+        webClient.post().uri("/api/portfolio")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue("""{"assetType":""}""")
             .exchange()
@@ -51,13 +55,13 @@ class WatchlistControllerTest(
 
     @Test
     fun `remove returns 404 problem detail when item is missing`() {
-        coEvery { service.remove(99) } throws WatchlistItemNotFoundException(99)
+        coEvery { service.remove(99) } throws PortfolioItemNotFoundException(99)
 
-        webClient.delete().uri("/api/watchlist/99").exchange()
+        webClient.delete().uri("/api/portfolio/99").exchange()
             .expectStatus().isNotFound
             .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
             .expectBody()
-            .jsonPath("$.title").isEqualTo("Watchlist item not found")
+            .jsonPath("$.title").isEqualTo("Portfolio item not found")
     }
 
     @Test
@@ -70,7 +74,7 @@ class WatchlistControllerTest(
             null,
         )
 
-        webClient.get().uri("/api/watchlist").exchange()
+        webClient.get().uri("/api/portfolio").exchange()
             .expectStatus().isUnauthorized
             .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
             .expectBody()

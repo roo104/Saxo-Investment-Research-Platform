@@ -26,7 +26,7 @@ data class Signal(
 data class IndicatorSeries(val name: String, val points: List<Double?>)
 
 @Schema(
-    description = "Computed trade signals for a watchlist instrument, derived from Saxo OHLC candles. " +
+    description = "Computed trade signals for a portfolio instrument, derived from Saxo OHLC candles. " +
             "Saxo's OpenAPI has no trade-signals endpoint, so these are calculated in-house."
 )
 data class Signals(

@@ -1,4 +1,4 @@
-package jp.saxo_investment_manager.watchlist
+package jp.saxo_investment_manager.portfolio
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,13 +13,13 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 /**
- * Verifies the watchlist repository against a real MySQL instance (Testcontainers).
+ * Verifies the portfolio repository against a real MySQL instance (Testcontainers).
  * Requires a running Docker daemon.
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
-class WatchlistRepositoryTest(@Autowired val repository: WatchlistRepository) {
+class PortfolioRepositoryTest(@Autowired val repository: PortfolioRepository) {
 
     companion object {
         @Container
@@ -31,7 +31,7 @@ class WatchlistRepositoryTest(@Autowired val repository: WatchlistRepository) {
     @Test
     fun `saves and finds an item by uic and asset type`() {
         val saved = repository.save(
-            WatchlistItem(
+            PortfolioItem(
                 uic = 211,
                 assetType = "Stock",
                 symbol = "AAPL:xnas",
@@ -47,9 +47,9 @@ class WatchlistRepositoryTest(@Autowired val repository: WatchlistRepository) {
 
     @Test
     fun `enforces uniqueness per uic and asset type`() {
-        repository.saveAndFlush(WatchlistItem(uic = 300, assetType = "Stock", symbol = "S", description = "D"))
+        repository.saveAndFlush(PortfolioItem(uic = 300, assetType = "Stock", symbol = "S", description = "D"))
         assertFailsWith<Exception> {
-            repository.saveAndFlush(WatchlistItem(uic = 300, assetType = "Stock", symbol = "S2", description = "D2"))
+            repository.saveAndFlush(PortfolioItem(uic = 300, assetType = "Stock", symbol = "S2", description = "D2"))
         }
     }
 }

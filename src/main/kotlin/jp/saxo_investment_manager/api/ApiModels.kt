@@ -3,6 +3,7 @@ package jp.saxo_investment_manager.api
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Positive
 
 /**
  * The camelCase JSON contract exposed to the frontend. Kept deliberately separate from the
@@ -25,13 +26,17 @@ data class InstrumentDto(
     val currencyCode: String?,
 )
 
-@Schema(description = "A watchlist entry enriched with the latest available info-price.")
-data class WatchlistEntryDto(
+@Schema(description = "A portfolio entry enriched with the latest available info-price.")
+data class PortfolioEntryDto(
     val id: Long,
     val uic: Long,
     val symbol: String,
     val description: String,
     val assetType: String,
+    @get:Schema(description = "Units held (shares, or notional for FX)", example = "10")
+    val quantity: Double?,
+    @get:Schema(description = "Price paid per unit when the position was opened", example = "180.5")
+    val openingPrice: Double?,
     @get:Schema(description = "Best bid, if a quote is available")
     val bid: Double?,
     @get:Schema(description = "Best ask, if a quote is available")
@@ -49,18 +54,28 @@ data class WatchlistEntryDto(
     val lastClose: Double? = null,
     @get:Schema(description = "Exchange the instrument trades on, if known", example = "NASDAQ")
     val exchange: String? = null,
+    @get:Schema(description = "Country of the listing exchange, if known", example = "United States")
+    val country: String? = null,
     @get:Schema(description = "Whether that market is currently open; null when it can't be determined")
     val marketOpen: Boolean? = null,
 )
 
-@Schema(description = "Request to add an instrument to the watchlist.")
-data class AddWatchlistRequest(
+@Schema(description = "Request to add an instrument to the portfolio.")
+data class AddPortfolioRequest(
     @field:NotNull(message = "uic is required")
     @get:Schema(description = "Saxo universal instrument code", example = "211")
     val uic: Long?,
     @field:NotBlank(message = "assetType is required")
     @get:Schema(example = "Stock")
     val assetType: String?,
+    @field:NotNull(message = "quantity is required")
+    @field:Positive(message = "quantity must be positive")
+    @get:Schema(description = "Units held (shares, or notional for FX)", example = "10")
+    val quantity: Double?,
+    @field:NotNull(message = "openingPrice is required")
+    @field:Positive(message = "openingPrice must be positive")
+    @get:Schema(description = "Price paid per unit when the position was opened", example = "180.5")
+    val openingPrice: Double?,
 )
 
 @Schema(
@@ -76,7 +91,7 @@ data class PricePoint(
     val close: Double?,
 )
 
-@Schema(description = "Historical price series for a watchlist instrument.")
+@Schema(description = "Historical price series for a portfolio instrument.")
 data class PriceHistoryDto(
     val uic: Long,
     val symbol: String,

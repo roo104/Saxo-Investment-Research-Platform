@@ -1,4 +1,4 @@
-import type {EnvironmentInfo, Fundamentals, Instrument, PriceHistory, Signals, WatchlistEntry} from './types'
+import type {EnvironmentInfo, Fundamentals, Instrument, PriceHistory, Signals, PortfolioEntry} from './types'
 
 const BASE = '/api'
 
@@ -44,26 +44,26 @@ export const api = {
         return request<Instrument[]>(`/instruments?${query.toString()}`)
     },
 
-    getWatchlist: () => request<WatchlistEntry[]>('/watchlist'),
+    getPortfolio: () => request<PortfolioEntry[]>('/portfolio'),
 
-    addToWatchlist: (uic: number, assetType: string) =>
-        request<WatchlistEntry>('/watchlist', {
+    addToPortfolio: (uic: number, assetType: string, quantity: number, openingPrice: number) =>
+        request<PortfolioEntry>('/portfolio', {
             method: 'POST',
-            body: JSON.stringify({uic, assetType}),
+            body: JSON.stringify({uic, assetType, quantity, openingPrice}),
         }),
 
-    removeFromWatchlist: (id: number) =>
-        request<void>(`/watchlist/${id}`, {method: 'DELETE'}),
+    removeFromPortfolio: (id: number) =>
+        request<void>(`/portfolio/${id}`, {method: 'DELETE'}),
 
     getHistory: (id: number, params: { horizon: number; count: number }) => {
         const query = new URLSearchParams({horizon: String(params.horizon), count: String(params.count)})
-        return request<PriceHistory>(`/watchlist/${id}/history?${query.toString()}`)
+        return request<PriceHistory>(`/portfolio/${id}/history?${query.toString()}`)
     },
 
-    getFundamentals: (id: number) => request<Fundamentals>(`/watchlist/${id}/fundamentals`),
+    getFundamentals: (id: number) => request<Fundamentals>(`/portfolio/${id}/fundamentals`),
 
     getSignals: (id: number, params: { horizon: number; count: number }) => {
         const query = new URLSearchParams({horizon: String(params.horizon), count: String(params.count)})
-        return request<Signals>(`/watchlist/${id}/signals?${query.toString()}`)
+        return request<Signals>(`/portfolio/${id}/signals?${query.toString()}`)
     },
 }

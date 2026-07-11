@@ -1,6 +1,6 @@
 package jp.saxo_investment_manager.api
 
-import jp.saxo_investment_manager.service.WatchlistItemNotFoundException
+import jp.saxo_investment_manager.service.PortfolioItemNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -43,10 +43,10 @@ class ApiExceptionHandler {
         }
     }
 
-    @ExceptionHandler(WatchlistItemNotFoundException::class)
-    fun handleNotFound(ex: WatchlistItemNotFoundException): ProblemDetail =
+    @ExceptionHandler(PortfolioItemNotFoundException::class)
+    fun handleNotFound(ex: PortfolioItemNotFoundException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.message ?: "Not found").apply {
-            title = "Watchlist item not found"
+            title = "Portfolio item not found"
         }
 
     private fun saxoDetail(ex: WebClientResponseException): String {

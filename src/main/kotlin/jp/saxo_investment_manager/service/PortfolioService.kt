@@ -6,7 +6,7 @@ import jp.saxo_investment_manager.api.PriceHistoryDto
 import jp.saxo_investment_manager.api.PricePoint
 import jp.saxo_investment_manager.api.SignalDirection
 import jp.saxo_investment_manager.api.Signals
-import jp.saxo_investment_manager.api.WatchlistEntryDto
+import jp.saxo_investment_manager.api.PortfolioEntryDto
 import jp.saxo_investment_manager.fundamentals.FundamentalsProvider
 import jp.saxo_investment_manager.market.MarketCalendar
 import jp.saxo_investment_manager.signals.SignalEngine
@@ -14,8 +14,8 @@ import jp.saxo_investment_manager.saxo.ChartClient
 import jp.saxo_investment_manager.saxo.ChartSample
 import jp.saxo_investment_manager.saxo.InfoPrice
 import jp.saxo_investment_manager.saxo.PricingClient
-import jp.saxo_investment_manager.watchlist.WatchlistItem
-import jp.saxo_investment_manager.watchlist.WatchlistRepository
+import jp.saxo_investment_manager.portfolio.PortfolioItem
+import jp.saxo_investment_manager.portfolio.PortfolioRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -24,39 +24,39 @@ import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Service
 
 /**
- * Manages the persisted watchlist and enriches each entry with the latest info-price from Saxo.
+ * Manages the persisted portfolio and enriches each entry with the latest info-price from Saxo.
  *
  * JPA is blocking, so every repository call is dispatched to [Dispatchers.IO] to keep the
  * reactive request threads free; Saxo calls suspend on the shared WebClient.
  */
 @Service
-class WatchlistService(
-    private val repository: WatchlistRepository,
+class PortfolioService(
+    private val repository: PortfolioRepository,
     private val pricingClient: PricingClient,
     private val chartClient: ChartClient,
     private val fundamentalsProvider: FundamentalsProvider,
     private val marketCalendar: MarketCalendar,
 ) {
 
-    /** Company fundamentals for a watchlist item (live from FMP; Saxo has no fundamentals API). */
+    /** Company fundamentals for a portfolio item (live from FMP; Saxo has no fundamentals API). */
     suspend fun fundamentals(id: Long): Fundamentals {
         val item = withContext(Dispatchers.IO) { repository.findById(id) }
-            .orElseThrow { WatchlistItemNotFoundException(id) }
+            .orElseThrow { PortfolioItemNotFoundException(id) }
         return fundamentalsProvider.fundamentals(item.uic, item.assetType, item.symbol, item.description)
     }
 
-    /** The (uic, assetType) of every watchlist item — used to set up price-stream subscriptions. */
+    /** The (uic, assetType) of every portfolio item — used to set up price-stream subscriptions. */
     suspend fun instruments(): List<Pair<Long, String>> =
         withContext(Dispatchers.IO) { repository.findAll().map { it.uic to it.assetType } }
 
-    /** The (uic, assetType) of a single watchlist item, or throws if it is gone. */
+    /** The (uic, assetType) of a single portfolio item, or throws if it is gone. */
     suspend fun instrument(id: Long): Pair<Long, String> =
         withContext(Dispatchers.IO) { repository.findById(id) }
-            .orElseThrow { WatchlistItemNotFoundException(id) }
+            .orElseThrow { PortfolioItemNotFoundException(id) }
             .let { it.uic to it.assetType }
 
-    /** Returns all watchlist items, each merged with its current quote (if one is available). */
-    suspend fun list(): List<WatchlistEntryDto> {
+    /** Returns all portfolio items, each merged with its current quote (if one is available). */
+    suspend fun list(): List<PortfolioEntryDto> {
         val items = withContext(Dispatchers.IO) { repository.findAll() }
         if (items.isEmpty()) return emptyList()
 
@@ -79,10 +79,10 @@ class WatchlistService(
     }
 
     /**
-     * Adds an instrument to the watchlist, or returns the existing entry if already present.
+     * Adds an instrument to the portfolio, or returns the existing entry if already present.
      * The symbol/description snapshot is taken from the live quote's display metadata.
      */
-    suspend fun add(uic: Long, assetType: String): WatchlistEntryDto {
+    suspend fun add(uic: Long, assetType: String, quantity: Double, openingPrice: Double): PortfolioEntryDto {
         withContext(Dispatchers.IO) { repository.findByUicAndAssetType(uic, assetType) }
             ?.let { return it.toDto(priceFor(it), marketCalendar) }
 
@@ -91,26 +91,35 @@ class WatchlistService(
         val description = price?.displayAndFormat?.description ?: symbol
 
         val saved = withContext(Dispatchers.IO) {
-            repository.save(WatchlistItem(uic = uic, assetType = assetType, symbol = symbol, description = description))
+            repository.save(
+                PortfolioItem(
+                    uic = uic,
+                    assetType = assetType,
+                    symbol = symbol,
+                    description = description,
+                    quantity = quantity,
+                    openingPrice = openingPrice,
+                ),
+            )
         }
         return saved.toDto(price, marketCalendar)
     }
 
-    /** Removes an item, or throws [WatchlistItemNotFoundException] if it does not exist. */
+    /** Removes an item, or throws [PortfolioItemNotFoundException] if it does not exist. */
     suspend fun remove(id: Long) {
         withContext(Dispatchers.IO) {
-            if (!repository.existsById(id)) throw WatchlistItemNotFoundException(id)
+            if (!repository.existsById(id)) throw PortfolioItemNotFoundException(id)
             repository.deleteById(id)
         }
     }
 
     /**
-     * Fetches historical OHLC candles for a watchlist item, mapping FX bid/ask candles to a single
+     * Fetches historical OHLC candles for a portfolio item, mapping FX bid/ask candles to a single
      * mid-price series so the frontend can render one line regardless of asset type.
      */
     suspend fun history(id: Long, horizonMinutes: Int, count: Int): PriceHistoryDto {
         val item = withContext(Dispatchers.IO) { repository.findById(id) }.orElseThrow {
-            WatchlistItemNotFoundException(id)
+            PortfolioItemNotFoundException(id)
         }
         val samples = chartClient.getChart(item.uic, item.assetType, horizonMinutes, count)
         val price = priceFor(item)
@@ -125,7 +134,7 @@ class WatchlistService(
     }
 
     /**
-     * Computes technical trade signals for a watchlist item from its OHLC candles (Saxo exposes no
+     * Computes technical trade signals for a portfolio item from its OHLC candles (Saxo exposes no
      * signals endpoint). Candles are mapped to a mid-price series, sorted oldest-first, and fed to
      * the [SignalEngine]. Fewer than two priced candles yields an unavailable result.
      *
@@ -136,7 +145,7 @@ class WatchlistService(
      */
     suspend fun signals(id: Long, horizonMinutes: Int, count: Int): Signals {
         val item = withContext(Dispatchers.IO) { repository.findById(id) }.orElseThrow {
-            WatchlistItemNotFoundException(id)
+            PortfolioItemNotFoundException(id)
         }
         val fetchCount = (count + SIGNAL_WARMUP).coerceAtMost(SAXO_MAX_CANDLES)
         val all = chartClient.getChart(item.uic, item.assetType, horizonMinutes, fetchCount)
@@ -178,11 +187,11 @@ class WatchlistService(
         )
     }
 
-    private suspend fun priceFor(item: WatchlistItem): InfoPrice? =
+    private suspend fun priceFor(item: PortfolioItem): InfoPrice? =
         pricingClient.getInfoPrices(listOf(item.uic), item.assetType).firstOrNull()
 
     /** Most recent daily close for an instrument, or null if chart history is unavailable. */
-    private suspend fun lastCloseFor(item: WatchlistItem): Double? =
+    private suspend fun lastCloseFor(item: PortfolioItem): Double? =
         runCatching { chartClient.getChart(item.uic, item.assetType, 1440, 1) }
             .getOrDefault(emptyList())
             .lastOrNull()
@@ -210,14 +219,16 @@ private fun ChartSample.toPoint() = PricePoint(
     close = mid(close, closeBid, closeAsk),
 )
 
-class WatchlistItemNotFoundException(id: Long) : RuntimeException("Watchlist item $id was not found")
+class PortfolioItemNotFoundException(id: Long) : RuntimeException("Portfolio item $id was not found")
 
-private fun WatchlistItem.toDto(price: InfoPrice?, calendar: MarketCalendar) = WatchlistEntryDto(
-    id = requireNotNull(id) { "Persisted watchlist item must have an id" },
+private fun PortfolioItem.toDto(price: InfoPrice?, calendar: MarketCalendar) = PortfolioEntryDto(
+    id = requireNotNull(id) { "Persisted portfolio item must have an id" },
     uic = uic,
     symbol = symbol,
     description = description,
     assetType = assetType,
+    quantity = quantity,
+    openingPrice = openingPrice,
     bid = price?.quote?.bid,
     ask = price?.quote?.ask,
     mid = price?.quote?.mid,
@@ -228,5 +239,6 @@ private fun WatchlistItem.toDto(price: InfoPrice?, calendar: MarketCalendar) = W
     // instrument's market data (Saxo sets PriceType* to "NoAccess"); treat that as no price.
     priceAvailable = price?.quote?.let { it.mid != null || it.bid != null || it.ask != null } ?: false,
     exchange = calendar.exchangeName(symbol),
+    country = calendar.country(symbol),
     marketOpen = calendar.isOpen(symbol, price?.quote?.marketState),
 )

@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
-import type {PricePoint, WatchlistEntry} from '../types'
+import type {PricePoint, PortfolioEntry} from '../types'
 import {PriceChart, type ChartMode} from './PriceChart'
 import {Fundamentals} from './Fundamentals'
 import {Signals} from './Signals'
@@ -19,7 +19,7 @@ function fmt(value: number | null): string {
 }
 
 /** The detail frame — shows a single selected instrument with its chart, fundamentals and signals. */
-export function WatchDetail({entry, onRemove}: { entry: WatchlistEntry; onRemove: (id: number) => void }) {
+export function PortfolioDetail({entry, onRemove}: { entry: PortfolioEntry; onRemove: (id: number) => void }) {
     const [view, setView] = useState<'chart' | 'fundamentals' | 'signals'>('chart')
     const [range, setRange] = useState<(typeof RANGES)[number]['key']>('1D')
     const [mode, setMode] = useState<ChartMode>('candles')
@@ -44,7 +44,7 @@ export function WatchDetail({entry, onRemove}: { entry: WatchlistEntry; onRemove
             setCandles(arr)
         }
 
-        const es = new EventSource(`/api/watchlist/${entry.id}/chart/stream?horizon=${r.horizon}&count=${r.count}`)
+        const es = new EventSource(`/api/portfolio/${entry.id}/chart/stream?horizon=${r.horizon}&count=${r.count}`)
         es.addEventListener('snapshot', (e) => {
             const u = JSON.parse((e as MessageEvent).data) as { points: PricePoint[] }
             byTime.current = new Map(u.points.map((p) => [p.time, p]))

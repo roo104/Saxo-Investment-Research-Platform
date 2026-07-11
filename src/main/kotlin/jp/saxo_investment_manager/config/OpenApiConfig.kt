@@ -13,7 +13,7 @@ class OpenApiConfig {
         Info()
             .title("Saxo Investment Research Platform API")
             .description(
-                "REST API for searching Saxo instruments and maintaining a watchlist with live quotes. " +
+                "REST API for searching Saxo instruments and maintaining a portfolio with live quotes. " +
                         "All Saxo communication happens server-side; the active environment (simulation or live) " +
                         "is reported by GET /api/environment.",
             )

@@ -14,8 +14,8 @@ import jp.saxo_investment_manager.saxo.Quote
 import jp.saxo_investment_manager.api.SignalDirection
 import jp.saxo_investment_manager.fundamentals.FundamentalsProvider
 import jp.saxo_investment_manager.market.MarketCalendar
-import jp.saxo_investment_manager.watchlist.WatchlistItem
-import jp.saxo_investment_manager.watchlist.WatchlistRepository
+import jp.saxo_investment_manager.portfolio.PortfolioItem
+import jp.saxo_investment_manager.portfolio.PortfolioRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -29,18 +29,18 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class WatchlistServiceTest {
-    private val repository = mockk<WatchlistRepository>()
+class PortfolioServiceTest {
+    private val repository = mockk<PortfolioRepository>()
     private val pricing = mockk<PricingClient>()
     private val chart = mockk<ChartClient>()
     private val fundamentals = mockk<FundamentalsProvider>()
 
     // Fixed at Monday 2026-07-13 14:00Z: 10:00 in New York, 16:00 in Copenhagen — both open.
     private val calendar = MarketCalendar(Clock.fixed(Instant.parse("2026-07-13T14:00:00Z"), ZoneId.of("UTC")))
-    private val service = WatchlistService(repository, pricing, chart, fundamentals, calendar)
+    private val service = PortfolioService(repository, pricing, chart, fundamentals, calendar)
 
     private fun item(uic: Long, id: Long, assetType: String = "Stock") =
-        WatchlistItem(uic = uic, assetType = assetType, symbol = "SYM$uic", description = "Desc $uic", id = id)
+        PortfolioItem(uic = uic, assetType = assetType, symbol = "SYM$uic", description = "Desc $uic", id = id)
 
     @Test
     fun `list enriches items with quotes grouped by asset type`() = runBlocking {
@@ -72,7 +72,7 @@ class WatchlistServiceTest {
     fun `list derives market-open from exchange hours when no quote is available`() = runBlocking {
         // No live quote (the sim NoAccess case for equities) — open/closed must come from the exchange.
         every { repository.findAll() } returns listOf(
-            WatchlistItem(uic = 211, assetType = "Stock", symbol = "AAPL:xnas", description = "Apple Inc.", id = 1),
+            PortfolioItem(uic = 211, assetType = "Stock", symbol = "AAPL:xnas", description = "Apple Inc.", id = 1),
         )
         coEvery { pricing.getInfoPrices(listOf(211), "Stock") } returns emptyList()
         coEvery { chart.getChart(211, "Stock", 1440, 1) } returns emptyList()
@@ -103,7 +103,7 @@ class WatchlistServiceTest {
         every { repository.findByUicAndAssetType(211, "Stock") } returns item(211, 1)
         coEvery { pricing.getInfoPrices(listOf(211), "Stock") } returns emptyList()
 
-        val result = service.add(211, "Stock")
+        val result = service.add(211, "Stock", quantity = 10.0, openingPrice = 180.0)
 
         assertEquals(1L, result.id)
         verify(exactly = 0) { repository.save(any()) }
@@ -120,13 +120,15 @@ class WatchlistServiceTest {
                 DisplayAndFormat(symbol = "AAPL:xnas", description = "Apple Inc.", currency = "USD")
             ),
         )
-        val saved = slot<WatchlistItem>()
+        val saved = slot<PortfolioItem>()
         every { repository.save(capture(saved)) } answers { saved.captured.apply { id = 5 } }
 
-        val result = service.add(211, "Stock")
+        val result = service.add(211, "Stock", quantity = 10.0, openingPrice = 180.0)
 
         assertEquals("AAPL:xnas", saved.captured.symbol)
         assertEquals("Apple Inc.", saved.captured.description)
+        assertEquals(10.0, saved.captured.quantity)
+        assertEquals(180.0, saved.captured.openingPrice)
         assertEquals(5L, result.id)
         assertEquals(9.9, result.mid)
     }
@@ -150,7 +152,7 @@ class WatchlistServiceTest {
     @Test
     fun `history throws when the item does not exist`() {
         every { repository.findById(99) } returns Optional.empty()
-        assertFailsWith<WatchlistItemNotFoundException> { runBlocking { service.history(99, 1440, 90) } }
+        assertFailsWith<PortfolioItemNotFoundException> { runBlocking { service.history(99, 1440, 90) } }
     }
 
     @Test
@@ -193,13 +195,13 @@ class WatchlistServiceTest {
     @Test
     fun `signals throws when the item does not exist`() {
         every { repository.findById(99) } returns Optional.empty()
-        assertFailsWith<WatchlistItemNotFoundException> { runBlocking { service.signals(99, 1440, 250) } }
+        assertFailsWith<PortfolioItemNotFoundException> { runBlocking { service.signals(99, 1440, 250) } }
     }
 
     @Test
     fun `remove throws when the item does not exist`() {
         every { repository.existsById(99) } returns false
-        assertFailsWith<WatchlistItemNotFoundException> { runBlocking { service.remove(99) } }
+        assertFailsWith<PortfolioItemNotFoundException> { runBlocking { service.remove(99) } }
         verify(exactly = 0) { repository.deleteById(any()) }
     }
 }

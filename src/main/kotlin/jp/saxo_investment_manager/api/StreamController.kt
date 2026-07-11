@@ -2,7 +2,7 @@ package jp.saxo_investment_manager.api
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import jp.saxo_investment_manager.service.WatchlistService
+import jp.saxo_investment_manager.service.PortfolioService
 import jp.saxo_investment_manager.streaming.SaxoChartStream
 import jp.saxo_investment_manager.streaming.SaxoPriceStream
 import kotlinx.coroutines.flow.Flow
@@ -19,24 +19,24 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/watchlist")
+@RequestMapping("/api/portfolio")
 @Tag(name = "Streaming", description = "Server-Sent Events of live prices and chart candles")
 class StreamController(
-    private val watchlistService: WatchlistService,
+    private val portfolioService: PortfolioService,
     private val priceStream: SaxoPriceStream,
     private val chartStream: SaxoChartStream,
 ) {
 
     /**
-     * Streams live prices for the current watchlist as Server-Sent Events. Emits the latest known
+     * Streams live prices for the current portfolio as Server-Sent Events. Emits the latest known
      * price for each instrument immediately, then pushes updates as they arrive from Saxo.
      *
      * Instruments added after the stream opens are not included until the client reconnects.
      */
     @GetMapping("/stream", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
-    @Operation(summary = "Stream live watchlist prices (SSE)")
+    @Operation(summary = "Stream live portfolio prices (SSE)")
     suspend fun stream(): Flow<ServerSentEvent<PriceTick>> {
-        val instruments = watchlistService.instruments()
+        val instruments = portfolioService.instruments()
         val uics = instruments.map { it.first }.toSet()
         instruments.forEach { (uic, assetType) -> priceStream.subscribe(uic, assetType) }
 
@@ -51,18 +51,18 @@ class StreamController(
     }
 
     /**
-     * Streams live OHLC candles for one watchlist instrument as SSE. Emits a `snapshot` event with
+     * Streams live OHLC candles for one portfolio instrument as SSE. Emits a `snapshot` event with
      * the full candle set, then `update` events as candles change (the current candle moves and new
      * candles roll in). `horizon` is the candle size in minutes; `count` is clamped to 2..1200.
      */
     @GetMapping("/{id}/chart/stream", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
-    @Operation(summary = "Stream live chart candles for a watchlist item (SSE)")
+    @Operation(summary = "Stream live chart candles for a portfolio item (SSE)")
     suspend fun chartStream(
         @PathVariable id: Long,
         @RequestParam(defaultValue = "60") horizon: Int,
         @RequestParam(defaultValue = "120") count: Int,
     ): Flow<ServerSentEvent<ChartUpdate>> {
-        val (uic, assetType) = watchlistService.instrument(id)
+        val (uic, assetType) = portfolioService.instrument(id)
         val key = chartStream.subscribe(uic, assetType, horizon, count.coerceIn(2, 1200))
 
         return flow {

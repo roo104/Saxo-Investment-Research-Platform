@@ -6,3 +6,12 @@
 export function fmtDecimal(value: number, digits = 2): string {
     return value.toLocaleString(undefined, {minimumFractionDigits: digits, maximumFractionDigits: digits})
 }
+
+/** A ratio (0..1) rendered as a locale-aware percentage, e.g. 0.4855 -> "48.55%". */
+export function fmtPercent(value: number, digits = 2): string {
+    return value.toLocaleString(undefined, {
+        style: 'percent',
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+    })
+}

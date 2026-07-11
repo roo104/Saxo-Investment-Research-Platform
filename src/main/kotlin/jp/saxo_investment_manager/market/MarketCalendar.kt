@@ -23,37 +23,45 @@ import java.time.ZoneId
 class MarketCalendar(private val clock: Clock) {
 
     /** A regular daily trading session for an exchange, in the exchange's local time. */
-    private data class Session(val name: String, val zone: ZoneId, val open: LocalTime, val close: LocalTime)
+    private data class Session(
+        val name: String,
+        val country: String,
+        val zone: ZoneId,
+        val open: LocalTime,
+        val close: LocalTime,
+    )
 
-    private fun session(name: String, zone: String, open: String, close: String) =
-        Session(name, ZoneId.of(zone), LocalTime.parse(open), LocalTime.parse(close))
+    private fun session(name: String, country: String, zone: String, open: String, close: String) =
+        Session(name, country, ZoneId.of(zone), LocalTime.parse(open), LocalTime.parse(close))
 
-    // Regular continuous-trading hours by exchange MIC code (lower-cased).
+    // Regular continuous-trading hours by exchange MIC code (lower-cased). The country is where the
+    // exchange lists, not the issuer's domicile — Saxo exposes no domicile, so an ADR reads as its
+    // listing country (e.g. a US-listed foreign company shows "United States").
     private val sessions: Map<String, Session> = mapOf(
-        "xnas" to session("NASDAQ", "America/New_York", "09:30", "16:00"),
-        "xnys" to session("NYSE", "America/New_York", "09:30", "16:00"),
-        "arcx" to session("NYSE Arca", "America/New_York", "09:30", "16:00"),
-        "bats" to session("Cboe BZX", "America/New_York", "09:30", "16:00"),
-        "xtse" to session("Toronto", "America/Toronto", "09:30", "16:00"),
-        "xcse" to session("Nasdaq Copenhagen", "Europe/Copenhagen", "09:00", "16:55"),
-        "xsto" to session("Nasdaq Stockholm", "Europe/Stockholm", "09:00", "17:30"),
-        "xhel" to session("Nasdaq Helsinki", "Europe/Helsinki", "10:00", "18:30"),
-        "xosl" to session("Oslo Børs", "Europe/Oslo", "09:00", "16:20"),
-        "xlon" to session("London", "Europe/London", "08:00", "16:30"),
-        "xetr" to session("Xetra", "Europe/Berlin", "09:00", "17:30"),
-        "xpar" to session("Euronext Paris", "Europe/Paris", "09:00", "17:30"),
-        "xams" to session("Euronext Amsterdam", "Europe/Amsterdam", "09:00", "17:30"),
-        "xbru" to session("Euronext Brussels", "Europe/Brussels", "09:00", "17:30"),
-        "xlis" to session("Euronext Lisbon", "Europe/Lisbon", "08:00", "16:30"),
-        "xmil" to session("Borsa Italiana", "Europe/Rome", "09:00", "17:30"),
-        "xmad" to session("Madrid", "Europe/Madrid", "09:00", "17:30"),
-        "xswx" to session("SIX Swiss", "Europe/Zurich", "09:00", "17:30"),
-        "xwbo" to session("Vienna", "Europe/Vienna", "09:00", "17:30"),
-        "xhkg" to session("Hong Kong", "Asia/Hong_Kong", "09:30", "16:00"),
-        "xtks" to session("Tokyo", "Asia/Tokyo", "09:00", "15:00"),
-        "xjpx" to session("Tokyo", "Asia/Tokyo", "09:00", "15:00"),
-        "xses" to session("Singapore", "Asia/Singapore", "09:00", "17:00"),
-        "xasx" to session("ASX", "Australia/Sydney", "10:00", "16:00"),
+        "xnas" to session("NASDAQ", "United States", "America/New_York", "09:30", "16:00"),
+        "xnys" to session("NYSE", "United States", "America/New_York", "09:30", "16:00"),
+        "arcx" to session("NYSE Arca", "United States", "America/New_York", "09:30", "16:00"),
+        "bats" to session("Cboe BZX", "United States", "America/New_York", "09:30", "16:00"),
+        "xtse" to session("Toronto", "Canada", "America/Toronto", "09:30", "16:00"),
+        "xcse" to session("Nasdaq Copenhagen", "Denmark", "Europe/Copenhagen", "09:00", "16:55"),
+        "xsto" to session("Nasdaq Stockholm", "Sweden", "Europe/Stockholm", "09:00", "17:30"),
+        "xhel" to session("Nasdaq Helsinki", "Finland", "Europe/Helsinki", "10:00", "18:30"),
+        "xosl" to session("Oslo Børs", "Norway", "Europe/Oslo", "09:00", "16:20"),
+        "xlon" to session("London", "United Kingdom", "Europe/London", "08:00", "16:30"),
+        "xetr" to session("Xetra", "Germany", "Europe/Berlin", "09:00", "17:30"),
+        "xpar" to session("Euronext Paris", "France", "Europe/Paris", "09:00", "17:30"),
+        "xams" to session("Euronext Amsterdam", "Netherlands", "Europe/Amsterdam", "09:00", "17:30"),
+        "xbru" to session("Euronext Brussels", "Belgium", "Europe/Brussels", "09:00", "17:30"),
+        "xlis" to session("Euronext Lisbon", "Portugal", "Europe/Lisbon", "08:00", "16:30"),
+        "xmil" to session("Borsa Italiana", "Italy", "Europe/Rome", "09:00", "17:30"),
+        "xmad" to session("Madrid", "Spain", "Europe/Madrid", "09:00", "17:30"),
+        "xswx" to session("SIX Swiss", "Switzerland", "Europe/Zurich", "09:00", "17:30"),
+        "xwbo" to session("Vienna", "Austria", "Europe/Vienna", "09:00", "17:30"),
+        "xhkg" to session("Hong Kong", "Hong Kong", "Asia/Hong_Kong", "09:30", "16:00"),
+        "xtks" to session("Tokyo", "Japan", "Asia/Tokyo", "09:00", "15:00"),
+        "xjpx" to session("Tokyo", "Japan", "Asia/Tokyo", "09:00", "15:00"),
+        "xses" to session("Singapore", "Singapore", "Asia/Singapore", "09:00", "17:00"),
+        "xasx" to session("ASX", "Australia", "Australia/Sydney", "10:00", "16:00"),
     )
 
     /** The exchange (MIC) code from a Saxo symbol like "AAPL:xnas", or null for symbols without one. */
@@ -63,6 +71,10 @@ class MarketCalendar(private val clock: Clock) {
     /** A human-readable exchange name for display, or null when the exchange is unknown. */
     fun exchangeName(symbol: String): String? =
         exchangeCode(symbol)?.let { sessions[it]?.name }
+
+    /** The country of the instrument's listing exchange, or null when the exchange is unknown. */
+    fun country(symbol: String): String? =
+        exchangeCode(symbol)?.let { sessions[it]?.country }
 
     /**
      * Whether the instrument's market is open right now. Prefers Saxo's live [marketState] when it

@@ -7,7 +7,7 @@ import org.springframework.web.reactive.function.client.awaitBody
 /**
  * Pricing endpoints of the Saxo OpenAPI (`/trade/v1`).
  *
- * Uses info-prices, which are indicative quotes intended for watchlists/research and do not
+ * Uses info-prices, which are indicative quotes intended for portfolios/research and do not
  * require the ability to trade the instrument.
  */
 @Component

@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
-import type {WatchlistEntry} from '../types'
+import type {PortfolioEntry} from '../types'
 import {fmtDecimal} from '../format'
 import {MarketBadge} from './MarketBadge'
 
@@ -9,14 +9,14 @@ function fmt(value: number | null): string {
 }
 
 interface Props {
-  entry: WatchlistEntry
+    entry: PortfolioEntry
   selected: boolean
   onSelect: (id: number) => void
   onRemove: (id: number) => void
 }
 
 /** A compact row in the master list — selecting it shows the instrument in the detail frame. */
-export function WatchRow({entry, selected, onSelect, onRemove}: Props) {
+export function PortfolioRow({entry, selected, onSelect, onRemove}: Props) {
   // Flash the row price green/red when the mid changes (driven by the price SSE stream).
   const prevMid = useRef<number | null>(entry.mid)
   const [flash, setFlash] = useState<'up' | 'down' | null>(null)
@@ -32,8 +32,8 @@ export function WatchRow({entry, selected, onSelect, onRemove}: Props) {
   }, [entry.mid])
 
   return (
-      <div className={`row watch-row${selected ? ' is-selected' : ''}${flash ? ` flash-${flash}` : ''}`}>
-        <button className="watch-toggle" onClick={() => onSelect(entry.id)} aria-pressed={selected}
+      <div className={`row portfolio-row${selected ? ' is-selected' : ''}${flash ? ` flash-${flash}` : ''}`}>
+          <button className="portfolio-toggle" onClick={() => onSelect(entry.id)} aria-pressed={selected}
                 aria-label={`Show ${entry.symbol}`}>
                 <span>
                     <span className="sym">{entry.description}</span>

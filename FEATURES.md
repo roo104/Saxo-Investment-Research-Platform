@@ -29,10 +29,10 @@ it.
 
 | Feature                                       | Status | Notes                                                                                                             |
 |-----------------------------------------------|--------|-------------------------------------------------------------------------------------------------------------------|
-| Snapshot info-prices (bid/ask/mid)            | ✅      | `trade/v1/infoprices/list`, mapped in watchlist                                                                   |
+| Snapshot info-prices (bid/ask/mid)            | ✅      | `trade/v1/infoprices/list`, mapped in portfolio                                                                   |
 | Honest "no quote" when not entitled           | ✅      | detects Saxo `NoAccess` price type                                                                                |
 | Snapshot fallback poll in the UI              | ✅      | 15s reconcile poll; live prices come from streaming                                                               |
-| Real-time **streaming** prices (WebSocket)    | ✅      | Saxo streaming WS + `trade/v1/prices/subscriptions`, pushed to the browser over SSE (`GET /api/watchlist/stream`) |
+| Real-time **streaming** prices (WebSocket)    | ✅      | Saxo streaming WS + `trade/v1/prices/subscriptions`, pushed to the browser over SSE (`GET /api/portfolio/stream`) |
 | Depth / order book                            | ⬜      | `trade/v1/prices` with `MarketDepth` field group                                                                  |
 | Delayed-data badges & market-state indicators | 🟡     | market state shown; needs clearer UX                                                                              |
 
@@ -40,7 +40,7 @@ it.
 
 | Feature                                   | Status | Notes                                                                                                                                                                                   |
 |-------------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Historical OHLC candles                   | ✅      | `GET /api/watchlist/{id}/history` → `chart/v3/charts`                                                                                                                                   |
+| Historical OHLC candles                   | ✅      | `GET /api/portfolio/{id}/history` → `chart/v3/charts`                                                                                                                                   |
 | Selectable ranges (1W / 1M / 3M)          | ✅      | horizon + count presets in the UI                                                                                                                                                       |
 | Line + area chart with hover crosshair    | ✅      | custom SVG `PriceChart`                                                                                                                                                                 |
 | Candlestick / OHLC bar view               | ✅      | Line / Candles toggle in the chart; green-up / red-down candles with OHLC hover                                                                                                         |
@@ -49,15 +49,15 @@ it.
 | Indicators: SMA/EMA, RSI, MACD, Bollinger | ✅      | computed server-side over candles (`jp.saxo_investment_manager.signals.Indicators`); see §8 Trade signals                                                                               |
 | Indicator overlays + RSI/MACD sub-panel   | ✅      | SMA/Bollinger overlays on the chart (`PriceChart` `overlays` prop) + RSI/MACD oscillator panels, in the Signals tab                                                                     |
 | Compare / overlay multiple instruments    | ⬜      | indexed-to-100 multi-series                                                                                                                                                             |
-| Streaming chart updates                   | ✅      | real OHLC candle subscription (`chart/v3/charts/subscriptions`) → SSE (`GET /api/watchlist/{id}/chart/stream`); the current candle's high/low/close update live and new candles roll in |
+| Streaming chart updates                   | ✅      | real OHLC candle subscription (`chart/v3/charts/subscriptions`) → SSE (`GET /api/portfolio/{id}/chart/stream`); the current candle's high/low/close update live and new candles roll in |
 
-## 4. Watchlists
+## 4. Portfolios
 
 | Feature                              | Status | Notes                            |
 |--------------------------------------|--------|----------------------------------|
-| Persisted watchlist with live quotes | ✅      | JPA/MySQL, `port`-independent    |
-| Add / remove instruments             | ✅      | `POST` / `DELETE /api/watchlist` |
-| Multiple named watchlists            | ⬜      | list entity + membership         |
+| Persisted portfolio with live quotes | ✅      | JPA/MySQL, `port`-independent    |
+| Add / remove instruments             | ✅      | `POST` / `DELETE /api/portfolio` |
+| Multiple named portfolios            | ⬜      | list entity + membership         |
 | Reordering & tagging                 | ⬜      |                                  |
 | Per-item notes / thesis              | ⬜      |                                  |
 | Import/export (CSV)                  | ⬜      |                                  |
@@ -98,9 +98,9 @@ it.
 |-------------------------------------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | News feed per instrument                        | ⬜      | Saxo news service group                                                                                                                                                                                                                                                                                                                                                                                 |
 | Corporate actions, dividends, earnings calendar | ⬜      |                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Fundamentals: key stats & financials view       | ✅      | Key stats + Financials (per year/quarter) UI (`GET /api/watchlist/{id}/fundamentals`). Saxo has **no** fundamentals API, so served via a `FundamentalsProvider` seam: **live data from Financial Modeling Prep** (`FmpFundamentalsProvider`, requires `FMP_API_KEY`). No mock/sample fallback — **app fails to start** without a key, 404 when the symbol is unmapped, `available=false` for non-equity |
+| Fundamentals: key stats & financials view       | ✅      | Key stats + Financials (per year/quarter) UI (`GET /api/portfolio/{id}/fundamentals`). Saxo has **no** fundamentals API, so served via a `FundamentalsProvider` seam: **live data from Financial Modeling Prep** (`FmpFundamentalsProvider`, requires `FMP_API_KEY`). No mock/sample fallback — **app fails to start** without a key, 404 when the symbol is unmapped, `available=false` for non-equity |
 | Screener (filter universe by criteria)          | ⬜      | built on instrument search + metrics                                                                                                                                                                                                                                                                                                                                                                    |
-| Trade signals (self-computed)                   | ✅      | Signals tab: net bias + bullish/bearish cards (SMA 50/200 cross, price vs SMA 50, RSI 14, MACD, Bollinger) with chart overlays and an RSI/MACD sub-panel. Saxo's "Trade Signals" (Autochartist) is **not** in the API and Autochartist has no self-serve API tier, so signals are computed in-house from `chart/v3` candles (`GET /api/watchlist/{id}/signals`). No third-party dependency              |
+| Trade signals (self-computed)                   | ✅      | Signals tab: net bias + bullish/bearish cards (SMA 50/200 cross, price vs SMA 50, RSI 14, MACD, Bollinger) with chart overlays and an RSI/MACD sub-panel. Saxo's "Trade Signals" (Autochartist) is **not** in the API and Autochartist has no self-serve API tier, so signals are computed in-house from `chart/v3` candles (`GET /api/portfolio/{id}/signals`). No third-party dependency              |
 
 ## 9. Risk & analytics
 
@@ -142,8 +142,8 @@ it.
 
 ## Suggested phasing
 
-- **Phase 1 — Research (now):** search ✅, watchlist ✅, quotes ✅, charts ✅. Next: instrument
-  detail, candlestick view, indicators, multiple watchlists.
+- **Phase 1 — Research (now):** search ✅, portfolio ✅, quotes ✅, charts ✅. Next: instrument
+  detail, candlestick view, indicators, multiple portfolios.
 - **Phase 2 — Real-time & portfolio:** live price streaming ✅ (WebSocket → SSE). Next: streaming
   charts, read-only portfolio (balances, positions, performance), and price alerts.
 - **Phase 3 — Trading (live):** OAuth/PKCE auth, pre-trade cost/margin, order placement with

@@ -1,8 +1,8 @@
-// theme-preview.js — live watchlist for the theme preview page.
+// theme-preview.js — live portfolio for the theme preview page.
 //
 // Data flow (see StreamController / ApiModels):
-//   1. GET  /api/watchlist          -> [WatchlistEntryDto]  (names + baseline mid)
-//   2. GET  /api/watchlist/stream   -> SSE "price" events of PriceTick (live mid)
+//   1. GET  /api/portfolio          -> [PortfolioEntryDto]  (names + baseline mid)
+//   2. GET  /api/portfolio/stream   -> SSE "price" events of PriceTick (live mid)
 // A PriceTick carries no symbol and no change figure, so names come from the REST
 // list and "Change / %" are computed here against the first mid we observe.
 
@@ -163,8 +163,8 @@
 
         if (!list.length) {
             tbody.innerHTML =
-                '<tr><td colspan="5" class="empty">Watchlist is empty — add instruments via ' +
-                "<code>POST /api/watchlist</code>.</td></tr>";
+                '<tr><td colspan="5" class="empty">Portfolio is empty — add instruments via ' +
+                "<code>POST /api/portfolio</code>.</td></tr>";
             return;
         }
 
@@ -224,7 +224,7 @@
     // ---- open the SSE stream ----
     function connect() {
         setLive("connecting", "Connecting…");
-        var es = new EventSource("/api/watchlist/stream");
+        var es = new EventSource("/api/portfolio/stream");
         es.addEventListener("price", onTick);
         es.onopen = function () {
             setLive("on", "Live");
@@ -239,14 +239,14 @@
     async function boot() {
         setLive("connecting", "Loading…");
         try {
-            var res = await fetch("/api/watchlist", {headers: {Accept: "application/json"}});
+            var res = await fetch("/api/portfolio", {headers: {Accept: "application/json"}});
             if (!res.ok) throw new Error("HTTP " + res.status);
             buildRows(await res.json());
         } catch (err) {
             var tbody = document.getElementById("rows");
             if (tbody) {
                 tbody.innerHTML =
-                    '<tr><td colspan="5" class="empty">Could not load watchlist (' +
+                    '<tr><td colspan="5" class="empty">Could not load portfolio (' +
                     String(err.message) + "). Is the backend running?</td></tr>";
             }
             setLive("error", "Offline");

@@ -58,6 +58,21 @@ class FmpFundamentalsProvider(
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "No fundamentals for $symbol (FMP ticker $ticker).")
     }
 
+    // Sector is static reference data fetched once per instrument (see PortfolioService.add) and
+    // cached, so it costs at most one FMP call per holding rather than one per view. Best-effort:
+    // any failure — non-equity, unknown ticker, paid-plan gating (402), or even a bad key — yields
+    // null so it never blocks adding an instrument. Only US equities are covered on the free tier.
+    override suspend fun sector(assetType: String, symbol: String): String? {
+        if (assetType !in equityTypes) return null
+        val ticker = toTicker(symbol)
+        return try {
+            firstObj(get("/stable/profile", "symbol" to ticker))?.str("sector")?.takeIf { it.isNotBlank() }
+        } catch (e: ResponseStatusException) {
+            log.debug("FMP sector lookup for {} ({}) failed: {}", symbol, ticker, e.reason)
+            null
+        }
+    }
+
     private fun toTicker(symbol: String): String {
         val base = normalizeShareClass(symbol.substringBefore(':'))
         val venue = symbol.substringAfter(':', "").lowercase()

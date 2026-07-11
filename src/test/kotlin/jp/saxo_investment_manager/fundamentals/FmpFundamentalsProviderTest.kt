@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class FmpFundamentalsProviderTest {
@@ -128,6 +129,37 @@ class FmpFundamentalsProviderTest {
             provider.fundamentals(112, "Stock", "NOVOb:xcse", "Novo Nordisk B")
         }
         assertEquals(404, ex.statusCode.value())
+    }
+
+    @Test
+    fun `sector reads the profile endpoint for an equity`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val path = request.path ?: ""
+                return if ("/profile" in path && "symbol=AAPL" in path) {
+                    json("""[{"symbol":"AAPL","sector":"Technology","industry":"Consumer Electronics"}]""")
+                } else json("[]")
+            }
+        }
+        assertEquals("Technology", provider.sector("Stock", "AAPL:xnas"))
+    }
+
+    @Test
+    fun `sector is null for non-equities without calling FMP`() = runBlocking {
+        assertNull(provider.sector("FxSpot", "EURUSD"))
+    }
+
+    @Test
+    fun `sector is null when the profile lookup fails (unknown or gated symbol)`() = runBlocking {
+        respondWith(MockResponse().setResponseCode(402))
+        assertNull(provider.sector("Stock", "NOVOb:xcse"))
+    }
+
+    @Test
+    fun `sector is best-effort and stays null even when the API key is rejected`() = runBlocking {
+        // A bad key is loud for fundamentals, but sector enrichment must never block adding a holding.
+        respondWith(MockResponse().setResponseCode(401))
+        assertNull(provider.sector("Stock", "AAPL:xnas"))
     }
 
     @Test

@@ -11,6 +11,7 @@ function entry(over: Partial<PortfolioEntry>): PortfolioEntry {
         assetType: 'Stock',
         quantity: 1,
         openingPrice: 100,
+        sector: 'Technology',
         bid: null,
         ask: null,
         mid: null,
@@ -72,6 +73,16 @@ describe('buildAllocation', () => {
         // Others = F(95) + G(94) = 189 of a 679 total.
         expect(currency.slices.at(-1)!.value).toBe(189)
         expect(currency.slices.reduce((sum, s) => sum + s.pct, 0)).toBeCloseTo(1)
+    })
+
+    it('groups sector and rolls unclassified holdings into Unknown', () => {
+        const {sector} = buildAllocation([
+            entry({sector: 'Technology', quantity: 1, mid: 60}),
+            entry({sector: 'Finance', quantity: 1, mid: 30}),
+            entry({sector: null, assetType: 'FxSpot', quantity: 1, mid: 10}),
+        ])
+        expect(sector.slices.map((s) => s.label)).toEqual(['Technology', 'Finance', 'Unknown'])
+        expect(sector.slices[0].pct).toBeCloseTo(0.6)
     })
 
     it('ignores positions with no value', () => {

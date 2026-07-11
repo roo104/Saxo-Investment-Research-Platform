@@ -37,6 +37,8 @@ data class PortfolioEntryDto(
     val quantity: Double?,
     @get:Schema(description = "Price paid per unit when the position was opened", example = "180.5")
     val openingPrice: Double?,
+    @get:Schema(description = "Sector classification, if known (equities only)", example = "Technology")
+    val sector: String?,
     @get:Schema(description = "Best bid, if a quote is available")
     val bid: Double?,
     @get:Schema(description = "Best ask, if a quote is available")

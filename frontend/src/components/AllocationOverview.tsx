@@ -12,6 +12,7 @@ interface Props {
 const HELP: Record<string, string> = {
     Assets: 'How your holdings split across asset classes (stocks, ETFs, currencies), weighted by market value.',
     Country: 'Share of holdings by the country of the exchange each instrument lists on — not the issuer’s home country.',
+    Sector: 'Share of equity holdings by sector. Sourced from fundamentals data; FX, ETFs and unclassified names show as “Unknown”.',
     Currency: 'Share of holdings by the currency each instrument trades in. Values are not converted to a single currency.',
 }
 
@@ -30,6 +31,7 @@ export function AllocationOverview({entries}: Props) {
             <div className="alloc-cards">
                 <AllocationCard breakdown={allocation.assets}/>
                 <AllocationCard breakdown={allocation.country}/>
+                <AllocationCard breakdown={allocation.sector}/>
                 <AllocationCard breakdown={allocation.currency}/>
             </div>
         </section>

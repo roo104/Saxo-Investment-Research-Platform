@@ -294,15 +294,23 @@ body {
 
 /* ---------------------------- allocation ---------------------------- */
 
-/* Three donut breakdowns (Assets · Country · Currency) side by side, stacking when narrow. */
+/* Donut breakdowns (Assets · Country · Sector · Currency) side by side, folding to 2×2 then a
+ * single column as the viewport narrows. The 1px gap over a border-coloured background draws the
+ * hairline separators between cells. */
 .alloc-cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 1px;
     background: var(--border);
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1040px) {
+    .alloc-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
     .alloc-cards {
         grid-template-columns: 1fr;
     }

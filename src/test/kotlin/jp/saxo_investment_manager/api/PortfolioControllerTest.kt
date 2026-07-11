@@ -31,7 +31,8 @@ class PortfolioControllerTest(
         coEvery { service.list() } returns listOf(
             PortfolioEntryDto(
                 id = 1, uic = 211, symbol = "AAPL:xnas", description = "Apple Inc.", assetType = "Stock",
-                quantity = 10.0, openingPrice = 180.0, bid = 1.0, ask = 2.0, mid = 1.5, currency = "USD",
+                quantity = 10.0, openingPrice = 180.0, sector = "Technology", bid = 1.0, ask = 2.0, mid = 1.5,
+                currency = "USD",
                 marketState = "Open", delayedByMinutes = 15, priceAvailable = true,
             ),
         )

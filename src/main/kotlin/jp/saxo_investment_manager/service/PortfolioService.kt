@@ -89,6 +89,9 @@ class PortfolioService(
         val price = pricingClient.getInfoPrices(listOf(uic), assetType).firstOrNull()
         val symbol = price?.displayAndFormat?.symbol ?: uic.toString()
         val description = price?.displayAndFormat?.description ?: symbol
+        // Sector is static reference data; snapshot it once here so the allocation view never
+        // spends a fundamentals call per render. Null (non-equity / unknown / non-US) is fine.
+        val sector = fundamentalsProvider.sector(assetType, symbol)
 
         val saved = withContext(Dispatchers.IO) {
             repository.save(
@@ -99,6 +102,7 @@ class PortfolioService(
                     description = description,
                     quantity = quantity,
                     openingPrice = openingPrice,
+                    sector = sector,
                 ),
             )
         }
@@ -229,6 +233,7 @@ private fun PortfolioItem.toDto(price: InfoPrice?, calendar: MarketCalendar) = P
     assetType = assetType,
     quantity = quantity,
     openingPrice = openingPrice,
+    sector = sector,
     bid = price?.quote?.bid,
     ask = price?.quote?.ask,
     mid = price?.quote?.mid,

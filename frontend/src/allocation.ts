@@ -26,6 +26,7 @@ export interface Breakdown {
 export interface Allocation {
     assets: Breakdown
     country: Breakdown
+    sector: Breakdown
     currency: Breakdown
     total: number
 }
@@ -88,6 +89,7 @@ export function buildAllocation(entries: PortfolioEntry[]): Allocation {
     return {
         assets: breakdown('Assets', entries, (e) => assetLabel(e.assetType)),
         country: breakdown('Country', entries, (e) => e.country ?? 'Unknown'),
+        sector: breakdown('Sector', entries, (e) => e.sector ?? 'Unknown'),
         currency: breakdown('Currency', entries, (e) => e.currency ?? 'Unknown'),
         total: entries.reduce((sum, e) => sum + positionValue(e), 0),
     }

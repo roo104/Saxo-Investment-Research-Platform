@@ -18,6 +18,7 @@ export interface PortfolioEntry {
     assetType: string
     quantity: number | null
     openingPrice: number | null
+    sector: string | null
     bid: number | null
     ask: number | null
     mid: number | null

@@ -45,6 +45,11 @@ class PortfolioItem(
     @Column(name = "opening_price")
     var openingPrice: Double? = null,
 
+    /** Sector classification, snapshotted once from the fundamentals feed at add-time (null when
+     * unavailable — non-equity, unknown ticker, or a non-US listing the free tier can't reach). */
+    @Column(name = "sector")
+    var sector: String? = null,
+
     @Column(name = "added_at", nullable = false)
     var addedAt: Instant = Instant.now(),
 

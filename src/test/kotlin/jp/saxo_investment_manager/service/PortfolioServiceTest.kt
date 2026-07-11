@@ -120,6 +120,7 @@ class PortfolioServiceTest {
                 DisplayAndFormat(symbol = "AAPL:xnas", description = "Apple Inc.", currency = "USD")
             ),
         )
+        coEvery { fundamentals.sector("Stock", "AAPL:xnas") } returns "Technology"
         val saved = slot<PortfolioItem>()
         every { repository.save(capture(saved)) } answers { saved.captured.apply { id = 5 } }
 
@@ -129,8 +130,10 @@ class PortfolioServiceTest {
         assertEquals("Apple Inc.", saved.captured.description)
         assertEquals(10.0, saved.captured.quantity)
         assertEquals(180.0, saved.captured.openingPrice)
+        assertEquals("Technology", saved.captured.sector)
         assertEquals(5L, result.id)
         assertEquals(9.9, result.mid)
+        assertEquals("Technology", result.sector)
     }
 
     @Test

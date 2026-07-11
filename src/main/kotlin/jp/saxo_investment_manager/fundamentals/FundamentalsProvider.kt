@@ -12,4 +12,11 @@ import jp.saxo_investment_manager.api.Fundamentals
  */
 interface FundamentalsProvider {
     suspend fun fundamentals(uic: Long, assetType: String, symbol: String, name: String): Fundamentals
+
+    /**
+     * The company's sector classification (e.g. "Technology"), or null when it is unavailable —
+     * a non-equity, an instrument the feed doesn't recognise, or a lookup failure. This is static
+     * reference data, so callers are expected to fetch it once and cache it rather than per request.
+     */
+    suspend fun sector(assetType: String, symbol: String): String?
 }

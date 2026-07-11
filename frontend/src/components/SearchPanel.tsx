@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from 'react'
 import {api, ApiError} from '../api'
 import type {Instrument} from '../types'
 
-const ASSET_TYPES = ['Stock', 'Etf', 'FxSpot', 'Bond', 'MutualFund', 'CfdOnStock']
+const ASSET_TYPES = ['Stock', 'ETF', 'FxSpot', 'Bond', 'MutualFund', 'CfdOnStock']
 
 interface Props {
     onAdd: (instrument: Instrument) => Promise<void>

@@ -22,7 +22,7 @@ class InstrumentController(private val instrumentService: InstrumentService) {
     suspend fun search(
         @Parameter(description = "Free-text query, e.g. 'Apple'")
         @RequestParam(required = false) keywords: String?,
-        @Parameter(description = "Comma-separated Saxo asset types, e.g. 'Stock,Etf'")
+        @Parameter(description = "Comma-separated Saxo asset types, e.g. 'Stock,ETF'")
         @RequestParam(required = false) assetTypes: String?,
         @Parameter(description = "Restrict to a single exchange, e.g. 'NASDAQ'")
         @RequestParam(required = false) exchangeId: String?,

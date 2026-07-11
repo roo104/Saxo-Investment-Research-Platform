@@ -16,7 +16,7 @@ class ReferenceDataClient(private val saxoWebClient: WebClient) {
      * Searches for instruments matching the given criteria via `GET /ref/v1/instruments`.
      *
      * @param keywords free-text query, e.g. "Apple" or "Novo".
-     * @param assetTypes comma-separated Saxo asset types to restrict to, e.g. "Stock,Etf".
+     * @param assetTypes comma-separated Saxo asset types to restrict to, e.g. "Stock,ETF".
      * @param exchangeId restrict to a single exchange, e.g. "NASDAQ".
      * @param top maximum number of results to return.
      */

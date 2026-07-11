@@ -84,7 +84,10 @@ export function WatchDetail({entry, onRemove}: { entry: WatchlistEntry; onRemove
                             <div className="spread">{fmt(entry.bid)} / {fmt(entry.ask)}</div>
                         </div>
                     ) : (
-                        <span className="na">no quote</span>
+                        <span className="na"
+                              title="Saxo isn’t returning a live price — usually a market-data entitlement your account doesn’t have (common for equities on simulation).">
+                            Live price unavailable
+                        </span>
                     )}
                     <button className="icon-btn" title="Remove" aria-label={`Remove ${entry.symbol}`}
                             onClick={() => onRemove(entry.id)}>×

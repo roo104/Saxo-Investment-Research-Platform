@@ -42,7 +42,9 @@ export function WatchRow({entry, selected, onSelect, onRemove}: Props) {
           {entry.priceAvailable ? (
               <div className="mid tnum">{fmt(entry.mid)}</div>
           ) : (
-              <span className="na">no quote</span>
+              <span className="na" title="No live price available for this instrument on your account">
+                No live price
+              </span>
           )}
         </div>
         <button className="icon-btn" title="Remove" aria-label={`Remove ${entry.symbol}`}

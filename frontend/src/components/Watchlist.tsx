@@ -14,7 +14,7 @@ interface Props {
 
 export function Watchlist({entries, loading, error, streaming, onRemove}: Props) {
     const [selectedId, setSelectedId] = useState<number | null>(null)
-    const [filter, setFilter] = useState<AssetFilter>('All')
+    const [filter, setFilter] = useState<AssetFilter>('Stock')
 
     // Filter by asset type, then show alphabetically by company name (the prominent label in each row).
     const visible = useMemo(
@@ -42,7 +42,7 @@ export function Watchlist({entries, loading, error, streaming, onRemove}: Props)
                     <span className="count">
                         {streaming && entries.length > 0 ? <span className="live-dot" title="Live streaming"/> : null}
                         {loading && entries.length === 0 ? <span className="spinner"/> : null}
-                        {filter === 'All' ? entries.length : `${visible.length} / ${entries.length}`} tracked
+                        {visible.length} / {entries.length} tracked
                     </span>
                 </div>
 

@@ -19,6 +19,20 @@ const OVERLAY_COLORS: Record<string, string> = {
     'Bollinger lower': '#64748b',
 }
 
+// Plain-language explanation of what each indicator measures — shown on hover.
+const EXPLANATIONS: Record<string, string> = {
+    'SMA 50/200':
+        'Compares the 50-period and 200-period simple moving averages. When the faster 50 sits above the slower 200 the trend is up; a fresh cross above is the "golden cross" (bullish), a cross below the "death cross" (bearish).',
+    'Price vs SMA 50':
+        'Where the latest price sits relative to its 50-period average. Above the average points to short-term strength, below it to weakness.',
+    'RSI (14)':
+        'Relative Strength Index over 14 periods, on a 0–100 scale. Above 70 is overbought and may pull back; below 30 is oversold and may bounce; 30–70 is neutral.',
+    'MACD (12,26,9)':
+        'Momentum from the gap between the 12- and 26-period averages, versus a 9-period signal line. MACD above its signal line is bullish momentum, below is bearish; a cross flags a shift.',
+    'Bollinger (20,2)':
+        'A 20-period average with bands two standard deviations above and below. Closing above the upper band is a breakout, below the lower band a breakdown; inside the bands is normal volatility.',
+}
+
 const BIAS_LABEL: Record<SignalDirection, string> = {BULLISH: 'Bullish', BEARISH: 'Bearish', NEUTRAL: 'Neutral'}
 const dirClass = (d: SignalDirection) => (d === 'BULLISH' ? 'sig-bull' : d === 'BEARISH' ? 'sig-bear' : 'sig-neutral')
 const seriesOf = (list: IndicatorSeries[], name: string): (number | null)[] =>
@@ -99,17 +113,23 @@ export function Signals({id, currency}: { id: number; currency: string | null })
             </div>
 
             <div className="sig-cards">
-                {data.signals.map((s) => (
-                    <div key={s.indicator} className={`sig-card ${dirClass(s.direction)}`}>
-                        <div className="sig-card-head">
-                            <span className="sig-dot"/>
-                            <span className="sig-label">{s.label}</span>
-                            {s.value ? <span className="sig-value tnum">{s.value}</span> : null}
+                {data.signals.map((s) => {
+                    const explanation = EXPLANATIONS[s.indicator]
+                    return (
+                        <div key={s.indicator}
+                             className={`sig-card ${dirClass(s.direction)}${explanation ? ' has-tip' : ''}`}>
+                            <div className="sig-card-head">
+                                <span className="sig-dot"/>
+                                <span className="sig-label">{s.label}</span>
+                                {explanation ? <span className="sig-info" aria-hidden="true">i</span> : null}
+                                {s.value ? <span className="sig-value tnum">{s.value}</span> : null}
+                            </div>
+                            <div className="sig-indicator">{s.indicator}</div>
+                            <div className="sig-detail">{s.detail}</div>
+                            {explanation ? <div className="sig-tip" role="tooltip">{explanation}</div> : null}
                         </div>
-                        <div className="sig-indicator">{s.indicator}</div>
-                        <div className="sig-detail">{s.detail}</div>
-                    </div>
-                ))}
+                    )
+                })}
             </div>
 
             <PriceChart points={data.points} currency={currency} mode="line" overlays={overlays}/>

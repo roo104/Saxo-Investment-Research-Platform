@@ -1029,11 +1029,66 @@ body {
 }
 
 .sig-card {
+    position: relative;
     border: 1px solid var(--border);
     border-left-width: 3px;
     border-radius: var(--radius);
     background: var(--bg-elev-2);
     padding: 9px 11px;
+}
+
+.sig-card.has-tip {
+    cursor: help;
+}
+
+/* small "i" affordance hinting the card is hoverable */
+.sig-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid var(--border-bright);
+    color: var(--text-faint);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 10px;
+    line-height: 1;
+    flex: none;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.sig-card.has-tip:hover .sig-info {
+    color: var(--blue);
+    border-color: var(--blue);
+}
+
+/* explanation tooltip, revealed on card hover */
+.sig-tip {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 30;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-dim);
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.sig-card.has-tip:hover .sig-tip,
+.sig-card.has-tip:focus-within .sig-tip {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .sig-card-head {

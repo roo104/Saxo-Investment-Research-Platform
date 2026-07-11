@@ -249,8 +249,8 @@ body {
 }
 
 .panel-head h2 {
-    font-family: var(--font-display);
-    font-weight: 500;
+    font-family: var(--font-ui);
+    font-weight: 600;
     font-size: 20px;
     margin: 0;
     letter-spacing: -0.01em;
@@ -745,8 +745,8 @@ body {
 }
 
 .fund-title {
-    font-family: var(--font-display);
-    font-weight: 500;
+    font-family: var(--font-ui);
+    font-weight: 600;
     font-size: 17px;
     margin: 0 0 8px;
     letter-spacing: -0.01em;

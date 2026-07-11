@@ -5,7 +5,7 @@ const H = 220
 const PAD = { top: 14, right: 16, bottom: 22, left: 56 }
 
 function fmtPrice(v: number): string {
-  return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 })
+    return v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})
 }
 
 function fmtDate(iso: string): string {

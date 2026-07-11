@@ -14,7 +14,7 @@ const RANGES = [
 
 function fmt(value: number | null): string {
     if (value == null) return '—'
-    return value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 5})
+    return value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})
 }
 
 /** The detail frame — shows a single selected instrument with its chart, fundamentals and signals. */

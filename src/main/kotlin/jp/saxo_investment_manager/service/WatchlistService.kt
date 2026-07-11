@@ -3,8 +3,11 @@ package jp.saxo_investment_manager.service
 import jp.saxo_investment_manager.api.Fundamentals
 import jp.saxo_investment_manager.api.PriceHistoryDto
 import jp.saxo_investment_manager.api.PricePoint
+import jp.saxo_investment_manager.api.SignalDirection
+import jp.saxo_investment_manager.api.Signals
 import jp.saxo_investment_manager.api.WatchlistEntryDto
 import jp.saxo_investment_manager.fundamentals.FundamentalsProvider
+import jp.saxo_investment_manager.signals.SignalEngine
 import jp.saxo_investment_manager.saxo.ChartClient
 import jp.saxo_investment_manager.saxo.ChartSample
 import jp.saxo_investment_manager.saxo.InfoPrice
@@ -103,6 +106,48 @@ class WatchlistService(
             horizonMinutes = horizonMinutes,
             currency = price?.displayAndFormat?.currency,
             points = samples.map { it.toPoint() },
+        )
+    }
+
+    /**
+     * Computes technical trade signals for a watchlist item from its OHLC candles (Saxo exposes no
+     * signals endpoint). Candles are mapped to a mid-price series, sorted oldest-first, and fed to
+     * the [SignalEngine]. Fewer than two priced candles yields an unavailable result.
+     */
+    suspend fun signals(id: Long, horizonMinutes: Int, count: Int): Signals {
+        val item = withContext(Dispatchers.IO) { repository.findById(id) }.orElseThrow {
+            WatchlistItemNotFoundException(id)
+        }
+        val points = chartClient.getChart(item.uic, item.assetType, horizonMinutes, count)
+            .map { it.toPoint() }
+            .filter { it.close != null }
+            .sortedBy { it.time }
+
+        if (points.size < 2) {
+            return Signals(
+                symbol = item.symbol,
+                horizonMinutes = horizonMinutes,
+                available = false,
+                asOf = points.lastOrNull()?.time,
+                netBias = SignalDirection.NEUTRAL,
+                signals = emptyList(),
+                points = points,
+                overlays = emptyList(),
+                oscillators = emptyList(),
+            )
+        }
+
+        val result = SignalEngine.evaluate(points)
+        return Signals(
+            symbol = item.symbol,
+            horizonMinutes = horizonMinutes,
+            available = true,
+            asOf = points.last().time,
+            netBias = result.netBias,
+            signals = result.signals,
+            points = points,
+            overlays = result.overlays,
+            oscillators = result.oscillators,
         )
     }
 

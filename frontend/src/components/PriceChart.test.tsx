@@ -40,4 +40,14 @@ describe('PriceChart', () => {
         // +0.25 on a 1.00 base = +25%
         expect(container.querySelector('.chart-change')!.textContent).toContain('25.00%')
     })
+
+    it('draws overlay lines and breaks them across warm-up gaps', () => {
+        const overlays = [{name: 'SMA', color: '#f5a623', values: [null, 1.05, 1.15]}]
+        const {container} = render(<PriceChart points={pts([1.0, 1.1, 1.2])} currency="USD" overlays={overlays}/>)
+
+        const overlay = container.querySelector('.chart-overlay')
+        expect(overlay).not.toBeNull()
+        // The null first value is skipped: the path starts (M) at the second point, not the first.
+        expect((overlay!.getAttribute('d')!.match(/M/g) ?? []).length).toBe(1)
+    })
 })

@@ -45,8 +45,9 @@ it.
 | Line + area chart with hover crosshair    | ✅      | custom SVG `PriceChart`                                                                                                                                                                 |
 | Candlestick / OHLC bar view               | ✅      | Line / Candles toggle in the chart; green-up / red-down candles with OHLC hover                                                                                                         |
 | More ranges & intraday (1D, 5Y, custom)   | ⬜      | more horizon/count presets                                                                                                                                                              |
-| Volume sub-panel                          | ⬜      | `Volume` field from chart data (securities)                                                                                                                                             |
-| Indicators: SMA/EMA, RSI, MACD, Bollinger | ⬜      | computed client- or server-side over candles                                                                                                                                            |
+| Volume sub-panel                          | ⬜      | `Volume` field from chart data (securities) — carried through the backend, not yet charted                                                                                              |
+| Indicators: SMA/EMA, RSI, MACD, Bollinger | ✅      | computed server-side over candles (`jp.saxo_investment_manager.signals.Indicators`); see §8 Trade signals                                                                               |
+| Indicator overlays + RSI/MACD sub-panel   | ✅      | SMA/Bollinger overlays on the chart (`PriceChart` `overlays` prop) + RSI/MACD oscillator panels, in the Signals tab                                                                     |
 | Compare / overlay multiple instruments    | ⬜      | indexed-to-100 multi-series                                                                                                                                                             |
 | Streaming chart updates                   | ✅      | real OHLC candle subscription (`chart/v3/charts/subscriptions`) → SSE (`GET /api/watchlist/{id}/chart/stream`); the current candle's high/low/close update live and new candles roll in |
 
@@ -99,6 +100,7 @@ it.
 | Corporate actions, dividends, earnings calendar | ⬜      |                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Fundamentals: key stats & financials view       | ✅      | Key stats + Financials (per year/quarter) UI (`GET /api/watchlist/{id}/fundamentals`). Saxo has **no** fundamentals API, so served via a `FundamentalsProvider` seam: **live data from Financial Modeling Prep** (`FmpFundamentalsProvider`, requires `FMP_API_KEY`). No mock/sample fallback — **app fails to start** without a key, 404 when the symbol is unmapped, `available=false` for non-equity |
 | Screener (filter universe by criteria)          | ⬜      | built on instrument search + metrics                                                                                                                                                                                                                                                                                                                                                                    |
+| Trade signals (self-computed)                   | ✅      | Signals tab: net bias + bullish/bearish cards (SMA 50/200 cross, price vs SMA 50, RSI 14, MACD, Bollinger) with chart overlays and an RSI/MACD sub-panel. Saxo's "Trade Signals" (Autochartist) is **not** in the API and Autochartist has no self-serve API tier, so signals are computed in-house from `chart/v3` candles (`GET /api/watchlist/{id}/signals`). No third-party dependency              |
 
 ## 9. Risk & analytics
 
@@ -201,8 +203,11 @@ server (WebSocket). The "Used here" column links back to the sections above.
 | **Partner Integration**   | Endpoints for partners integrating with Saxo                                                                                                           | ⬜            |
 
 > **Not offered by Saxo:** there is **no fundamentals / financial-statements endpoint** — that's why
-> §8 sources fundamentals from Financial Modeling Prep, not Saxo. Note also that in **simulation**,
-> entitlements are limited: FX has live streaming prices, equities return `NoAccess`.
+> §8 sources fundamentals from Financial Modeling Prep, not Saxo. There is likewise **no trade-signals
+> endpoint**: Saxo's in-platform "Trade Signals" are an Autochartist integration (Autochartist has no
+> self-serve API tier), so §8 computes its own signals from the `chart/v3` candles instead. Note also
+> that in **simulation**, entitlements are limited: FX has live streaming prices, equities return
+> `NoAccess`.
 >
 > Source: [Saxo OpenAPI reference docs](https://www.developer.saxo/openapi/referencedocs) ·
 > [service groups](https://www.developer.saxo/openapi/learn/service-groups).

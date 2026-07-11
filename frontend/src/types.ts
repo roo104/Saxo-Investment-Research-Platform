@@ -88,3 +88,30 @@ export interface PriceTick {
     lastUpdated: string | null
     priceAvailable: boolean
 }
+
+export type SignalDirection = 'BULLISH' | 'BEARISH' | 'NEUTRAL'
+
+export interface Signal {
+    indicator: string
+    label: string
+    direction: SignalDirection
+    value: string | null
+    detail: string
+}
+
+export interface IndicatorSeries {
+    name: string
+    points: (number | null)[]
+}
+
+export interface Signals {
+    symbol: string
+    horizonMinutes: number
+    available: boolean
+    asOf: string | null
+    netBias: SignalDirection
+    signals: Signal[]
+    points: PricePoint[]
+    overlays: IndicatorSeries[]
+    oscillators: IndicatorSeries[]
+}

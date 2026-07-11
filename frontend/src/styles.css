@@ -876,3 +876,216 @@ body {
         transform: rotate(360deg);
     }
 }
+
+/* ------------------------------ signals ------------------------------ */
+.signals {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* price-chart overlays (moving averages, Bollinger bands) */
+.chart-overlay {
+    fill: none;
+    stroke-width: 1.4;
+    opacity: 0.9;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+.sig-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sig-bias {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border-bright);
+}
+
+.sig-summary-note {
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+.sig-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+}
+
+.sig-card {
+    border: 1px solid var(--border);
+    border-left-width: 3px;
+    border-radius: var(--radius);
+    background: var(--bg-elev-2);
+    padding: 9px 11px;
+}
+
+.sig-card-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.sig-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: none;
+}
+
+.sig-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.sig-value {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+.sig-indicator {
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-top: 3px;
+}
+
+.sig-detail {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.35;
+}
+
+/* direction colouring, shared by cards (via border/dot) and the bias pill */
+.sig-card.sig-bull {
+    border-left-color: var(--up);
+}
+
+.sig-card.sig-bear {
+    border-left-color: var(--down);
+}
+
+.sig-card.sig-neutral {
+    border-left-color: var(--border-bright);
+}
+
+.sig-bull .sig-dot {
+    background: var(--up);
+}
+
+.sig-bear .sig-dot {
+    background: var(--down);
+}
+
+.sig-neutral .sig-dot {
+    background: var(--text-faint);
+}
+
+.sig-bias.sig-bull {
+    color: var(--up);
+    border-color: var(--up);
+}
+
+.sig-bias.sig-bear {
+    color: var(--down);
+    border-color: var(--down);
+}
+
+.sig-bias.sig-neutral {
+    color: var(--text-dim);
+}
+
+.sig-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: -4px;
+}
+
+.sig-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.sig-swatch {
+    width: 12px;
+    height: 2px;
+    border-radius: 1px;
+}
+
+/* oscillator sub-panels (RSI, MACD) */
+.osc {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.osc-title {
+    font-size: 11px;
+    color: var(--text-faint);
+}
+
+.osc-svg {
+    display: block;
+    width: 100%;
+    height: 96px;
+}
+
+.osc-guide {
+    stroke: var(--border-bright);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+    vector-effect: non-scaling-stroke;
+}
+
+.osc-zone {
+    fill: var(--blue-dim);
+}
+
+.osc-axis {
+    fill: var(--text-faint);
+    font-size: 9px;
+    font-family: var(--font-mono);
+}
+
+.osc-line {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.osc-rsi {
+    stroke: var(--blue-bright);
+}
+
+.osc-macd {
+    stroke: var(--blue);
+}
+
+.osc-signal {
+    stroke: #f5a623;
+}
+
+.osc-hist {
+    opacity: 0.55;
+}
+
+.osc-hist.up {
+    fill: var(--up);
+}
+
+.osc-hist.down {
+    fill: var(--down);
+}

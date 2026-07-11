@@ -1,4 +1,4 @@
-import type {EnvironmentInfo, Fundamentals, Instrument, PriceHistory, WatchlistEntry} from './types'
+import type {EnvironmentInfo, Fundamentals, Instrument, PriceHistory, Signals, WatchlistEntry} from './types'
 
 const BASE = '/api'
 
@@ -61,4 +61,9 @@ export const api = {
     },
 
     getFundamentals: (id: number) => request<Fundamentals>(`/watchlist/${id}/fundamentals`),
+
+    getSignals: (id: number, params: { horizon: number; count: number }) => {
+        const query = new URLSearchParams({horizon: String(params.horizon), count: String(params.count)})
+        return request<Signals>(`/watchlist/${id}/signals?${query.toString()}`)
+    },
 }

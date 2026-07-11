@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { PricePoint, WatchlistEntry } from '../types'
 import {PriceChart, type ChartMode} from './PriceChart'
 import {Fundamentals} from './Fundamentals'
+import {Signals} from './Signals'
 
 const RANGES = [
   { key: '1m', horizon: 1, count: 120 },
@@ -17,7 +18,7 @@ function fmt(value: number | null): string {
 
 export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove: (id: number) => void }) {
   const [expanded, setExpanded] = useState(false)
-    const [view, setView] = useState<'chart' | 'fundamentals'>('chart')
+  const [view, setView] = useState<'chart' | 'fundamentals' | 'signals'>('chart')
   const [range, setRange] = useState<(typeof RANGES)[number]['key']>('1m')
     const [mode, setMode] = useState<ChartMode>('line')
   const [candles, setCandles] = useState<PricePoint[]>([])
@@ -118,6 +119,9 @@ export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove:
                 <button className={`view-tab${view === 'fundamentals' ? ' active' : ''}`}
                         onClick={() => setView('fundamentals')}>Fundamentals
                 </button>
+              <button className={`view-tab${view === 'signals' ? ' active' : ''}`}
+                      onClick={() => setView('signals')}>Signals
+              </button>
             </div>
 
             {view === 'chart' ? (
@@ -146,8 +150,10 @@ export function WatchRow({ entry, onRemove }: { entry: WatchlistEntry; onRemove:
                     {candles.length > 0 &&
                         <PriceChart points={candles} currency={entry.currency} mode={mode} live={streaming}/>}
                 </>
-            ) : (
+            ) : view === 'fundamentals' ? (
                 <Fundamentals id={entry.id}/>
+            ) : (
+                <Signals id={entry.id} currency={entry.currency}/>
             )}
         </div>
       )}

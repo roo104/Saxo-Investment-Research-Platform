@@ -11,6 +11,7 @@ import jp.saxo_investment_manager.saxo.DisplayAndFormat
 import jp.saxo_investment_manager.saxo.InfoPrice
 import jp.saxo_investment_manager.saxo.PricingClient
 import jp.saxo_investment_manager.saxo.Quote
+import jp.saxo_investment_manager.api.SignalDirection
 import jp.saxo_investment_manager.fundamentals.FundamentalsProvider
 import jp.saxo_investment_manager.watchlist.WatchlistItem
 import jp.saxo_investment_manager.watchlist.WatchlistRepository
@@ -126,6 +127,43 @@ class WatchlistServiceTest {
     fun `history throws when the item does not exist`() {
         every { repository.findById(99) } returns Optional.empty()
         assertFailsWith<WatchlistItemNotFoundException> { runBlocking { service.history(99, 1440, 90) } }
+    }
+
+    @Test
+    fun `signals computes indicators from candles for a rising series`() = runBlocking {
+        every { repository.findById(1) } returns Optional.of(item(211, 1))
+        val samples = (1..220).map {
+            ChartSample(time = "2026-01-%03dT00:00:00Z".format(it), close = Math.pow(1.01, it.toDouble()))
+        }
+        coEvery { chart.getChart(211, "Stock", 1440, 250) } returns samples
+
+        val result = service.signals(1, horizonMinutes = 1440, count = 250)
+
+        assertTrue(result.available)
+        assertEquals(SignalDirection.BULLISH, result.netBias)
+        assertEquals(220, result.points.size)
+        assertTrue(result.signals.isNotEmpty())
+        assertEquals(samples.last().time, result.asOf)
+    }
+
+    @Test
+    fun `signals is unavailable when too few candles come back`() = runBlocking {
+        every { repository.findById(1) } returns Optional.of(item(211, 1))
+        coEvery { chart.getChart(211, "Stock", 1440, 250) } returns listOf(
+            ChartSample(time = "2026-01-01T00:00:00Z", close = 1.0),
+        )
+
+        val result = service.signals(1, horizonMinutes = 1440, count = 250)
+
+        assertFalse(result.available)
+        assertEquals(SignalDirection.NEUTRAL, result.netBias)
+        assertTrue(result.signals.isEmpty())
+    }
+
+    @Test
+    fun `signals throws when the item does not exist`() {
+        every { repository.findById(99) } returns Optional.empty()
+        assertFailsWith<WatchlistItemNotFoundException> { runBlocking { service.signals(99, 1440, 250) } }
     }
 
     @Test

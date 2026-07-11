@@ -18,12 +18,21 @@ function fmtTime(iso: string): string {
 
 export type ChartMode = 'line' | 'candles'
 
+export interface ChartOverlay {
+    name: string
+    color: string
+    /** One value per price point (index-aligned); null marks an indicator warm-up gap. */
+    values: (number | null)[]
+}
+
 interface Props {
   points: PricePoint[]
   currency: string | null
     mode?: ChartMode
     /** When true, the last candle is the live (streaming) one: pulsing tip, guide line, LIVE tag. */
   live?: boolean
+    /** Indicator lines drawn over the price series (e.g. moving averages, Bollinger bands). */
+    overlays?: ChartOverlay[]
 }
 
 interface Candle {
@@ -40,7 +49,7 @@ interface Candle {
  * axes; crosshair-and-tooltip hover. When [live], the final candle streams and the right edge tracks
  * the market. Width is measured from the container so the SVG maps 1:1 to pixels.
  */
-export function PriceChart({points, currency, mode = 'line', live}: Props) {
+export function PriceChart({points, currency, mode = 'line', live, overlays}: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const [width, setWidth] = useState(560)
@@ -74,8 +83,14 @@ export function PriceChart({points, currency, mode = 'line', live}: Props) {
   const geometry = useMemo(() => {
       if (candlesData.length < 2) return null
     const W = width
-      const min = mode === 'candles' ? Math.min(...candlesData.map((d) => d.l)) : Math.min(...candlesData.map((d) => d.c))
-      const max = mode === 'candles' ? Math.max(...candlesData.map((d) => d.h)) : Math.max(...candlesData.map((d) => d.c))
+      const lows = mode === 'candles' ? candlesData.map((d) => d.l) : candlesData.map((d) => d.c)
+      const highs = mode === 'candles' ? candlesData.map((d) => d.h) : candlesData.map((d) => d.c)
+      // Fold overlay values (which can exceed the close range, e.g. Bollinger bands) into the scale.
+      const extra = (overlays ?? [])
+          .flatMap((o) => o.values.slice(0, candlesData.length))
+          .filter((v): v is number => v != null && Number.isFinite(v))
+      const min = Math.min(...lows, ...extra)
+      const max = Math.max(...highs, ...extra)
     const span = max - min || max || 1
     const innerW = W - PAD.left - PAD.right
     const innerH = H - PAD.top - PAD.bottom
@@ -83,7 +98,7 @@ export function PriceChart({points, currency, mode = 'line', live}: Props) {
     const y = (v: number) => PAD.top + innerH - ((v - min) / span) * innerH
       const bodyW = Math.max(1, Math.min(14, (innerW / candlesData.length) * 0.62))
       return {W, min, max, x, y, innerW, bodyW}
-  }, [candlesData, width, mode])
+  }, [candlesData, width, mode, overlays])
 
   if (!geometry) {
     return (
@@ -187,6 +202,21 @@ export function PriceChart({points, currency, mode = 'line', live}: Props) {
                   )
               })
           )}
+
+          {(overlays ?? []).map((o) => {
+              let d = ''
+              let pen = false
+              for (let i = 0; i < candlesData.length; i++) {
+                  const v = o.values[i]
+                  if (v == null || !Number.isFinite(v)) {
+                      pen = false
+                      continue
+                  }
+                  d += `${pen ? 'L' : 'M'}${geometry.x(i).toFixed(1)},${geometry.y(v).toFixed(1)} `
+                  pen = true
+              }
+              return d ? <path key={o.name} className="chart-overlay" d={d.trim()} style={{stroke: o.color}}/> : null
+          })}
 
           {(mode === 'line' || isLiveTip) && (
               <circle cx={lastCoord[0]} cy={lastCoord[1]} r={isLiveTip ? 4.5 : 4}

@@ -2,7 +2,7 @@ import {useEffect, useMemo, useState} from 'react'
 import type {PortfolioEntry} from '../types'
 import {ASSET_FILTERS, type AssetFilter, inCategory} from '../assetTypes'
 import {PortfolioRow} from './PortfolioRow'
-import {PortfolioDetail} from './PortfolioDetail'
+import {PortfolioDetail, type DetailView} from './PortfolioDetail'
 
 interface Props {
     entries: PortfolioEntry[]
@@ -15,6 +15,8 @@ interface Props {
 export function Portfolio({entries, loading, error, streaming, onRemove}: Props) {
     const [selectedId, setSelectedId] = useState<number | null>(null)
     const [filter, setFilter] = useState<AssetFilter>('Stock')
+    // Held here so it persists when a different asset is selected (each PortfolioDetail remounts on id change).
+    const [view, setView] = useState<DetailView>('chart')
 
     // Filter by asset type, then show alphabetically by company name (the prominent label in each row).
     const visible = useMemo(
@@ -83,7 +85,8 @@ export function Portfolio({entries, loading, error, streaming, onRemove}: Props)
             </section>
 
             {selected ? (
-                <PortfolioDetail key={selected.id} entry={selected} onRemove={onRemove}/>
+                <PortfolioDetail key={selected.id} entry={selected} view={view} onViewChange={setView}
+                                 onRemove={onRemove}/>
             ) : (
                 <section className="panel detail detail-empty">
                     <div className="empty">

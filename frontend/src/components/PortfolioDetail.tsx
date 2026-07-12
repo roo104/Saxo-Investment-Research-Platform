@@ -18,9 +18,15 @@ function fmt(value: number | null): string {
     return fmtDecimal(value)
 }
 
+export type DetailView = 'chart' | 'fundamentals' | 'signals'
+
 /** The detail frame — shows a single selected instrument with its chart, fundamentals and signals. */
-export function PortfolioDetail({entry, onRemove}: { entry: PortfolioEntry; onRemove: (id: number) => void }) {
-    const [view, setView] = useState<'chart' | 'fundamentals' | 'signals'>('chart')
+export function PortfolioDetail({entry, view, onViewChange, onRemove}: {
+    entry: PortfolioEntry
+    view: DetailView
+    onViewChange: (view: DetailView) => void
+    onRemove: (id: number) => void
+}) {
     const [range, setRange] = useState<(typeof RANGES)[number]['key']>('1D')
     const [mode, setMode] = useState<ChartMode>('candles')
     const [candles, setCandles] = useState<PricePoint[]>([])
@@ -101,13 +107,13 @@ export function PortfolioDetail({entry, onRemove}: { entry: PortfolioEntry; onRe
             <div className="chart-region">
                 <div className="view-tabs">
                     <button className={`view-tab${view === 'chart' ? ' active' : ''}`}
-                            onClick={() => setView('chart')}>Chart
+                            onClick={() => onViewChange('chart')}>Chart
                     </button>
                     <button className={`view-tab${view === 'fundamentals' ? ' active' : ''}`}
-                            onClick={() => setView('fundamentals')}>Fundamentals
+                            onClick={() => onViewChange('fundamentals')}>Fundamentals
                     </button>
                     <button className={`view-tab${view === 'signals' ? ' active' : ''}`}
-                            onClick={() => setView('signals')}>Signals
+                            onClick={() => onViewChange('signals')}>Signals
                     </button>
                 </div>
 

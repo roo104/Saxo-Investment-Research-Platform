@@ -17,6 +17,13 @@ spring:
     problemdetails:
       enabled: true
 
+# Spring Boot 4 defaults server.shutdown to `graceful`, which waits for in-flight requests to
+# finish before closing. Our SSE streaming endpoints (see StreamController) never complete on
+# their own, so graceful shutdown blocks for the full timeout-per-shutdown-phase (30s) on every
+# restart while a browser holds an EventSource open. Immediate shutdown closes them at once.
+server:
+  shutdown: immediate
+
 # Saxo OpenAPI connection. Switch environments by setting SAXO_ENV to simulation|live and
 # providing the matching token. Tokens are read from the environment, never committed.
 saxo:

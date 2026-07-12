@@ -12,6 +12,7 @@ import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.netty.http.client.HttpClient
+import reactor.netty.resources.ConnectionProvider
 import java.time.Duration
 
 /**
@@ -28,7 +29,17 @@ class WebClientConfig(
 
     @Bean
     fun saxoWebClient(): WebClient {
-        val httpClient = HttpClient.create()
+        // The default pool never evicts idle connections, so after the app sits idle Saxo's gateway
+        // silently closes them while the pool keeps handing them out — the next request then fails
+        // with "Connection reset". Eviction (idle + max-life) plus a background sweep prunes dead
+        // connections before they can be reused.
+        val connectionProvider = ConnectionProvider.builder("saxo")
+            .maxIdleTime(Duration.ofMillis(properties.poolMaxIdleTimeMs))
+            .maxLifeTime(Duration.ofMillis(properties.poolMaxLifeTimeMs))
+            .evictInBackground(Duration.ofMillis(properties.poolEvictInBackgroundMs))
+            .build()
+
+        val httpClient = HttpClient.create(connectionProvider)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, properties.connectTimeoutMs.toInt())
             .responseTimeout(Duration.ofMillis(properties.responseTimeoutMs))
 

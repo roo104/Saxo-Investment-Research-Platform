@@ -3,7 +3,7 @@ import {api, ApiError} from '../api'
 import type {IndicatorSeries, Signals as SignalsData, SignalDirection} from '../types'
 import {PriceChart, type ChartOverlay} from './PriceChart'
 import {MacdPanel, RsiPanel} from './Oscillator'
-import {fmtDecimal} from '../format'
+import {axisTimeLabels, fmtDecimal} from '../format'
 
 // `count` is the number of candles to display; the backend fetches extra warm-up candles on top
 // so long indicators (SMA 200) are fully formed across the whole window, not just its tail.
@@ -118,6 +118,13 @@ export function Signals({id, currency}: { id: number; currency: string | null })
     const bull = data.signals.filter((s) => s.direction === 'BULLISH').length
     const bear = data.signals.filter((s) => s.direction === 'BEARISH').length
 
+    // Shared timeline for the whole stack; each oscillator labels its own bottom axis with it.
+    const timeLabels = axisTimeLabels(data.points.map((p) => p.time))
+    const rsiValues = seriesOf(data.oscillators, 'RSI')
+    const macdValues = seriesOf(data.oscillators, 'MACD')
+    const signalValues = seriesOf(data.oscillators, 'Signal')
+    const histValues = seriesOf(data.oscillators, 'Histogram')
+
     return (
         <div className="signals">
             {rangeTabs}
@@ -163,12 +170,14 @@ export function Signals({id, currency}: { id: number; currency: string | null })
                 })}
             </div>
 
-            <RsiPanel values={seriesOf(data.oscillators, 'RSI')} tip={EXPLANATIONS['RSI (14)']}/>
+            <RsiPanel values={rsiValues} tip={EXPLANATIONS['RSI (14)']} labels={timeLabels} showTime/>
             <MacdPanel
-                macd={seriesOf(data.oscillators, 'MACD')}
-                signal={seriesOf(data.oscillators, 'Signal')}
-                histogram={seriesOf(data.oscillators, 'Histogram')}
+                macd={macdValues}
+                signal={signalValues}
+                histogram={histValues}
                 tip={EXPLANATIONS['MACD (12,26,9)']}
+                labels={timeLabels}
+                showTime
             />
         </div>
     )

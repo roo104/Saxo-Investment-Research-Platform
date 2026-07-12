@@ -1588,3 +1588,40 @@ body {
 .osc-hist.down {
     fill: var(--down);
 }
+
+/* MACD colour key: swatches mirror the line / histogram colours drawn in the panel */
+.osc-legend {
+    margin-top: 4px;
+}
+
+.osc-swatch-rsi {
+    background: var(--blue-bright);
+}
+
+/* mirrors the dashed 70/30 guide lines (stroke-dasharray 2 4) */
+.osc-swatch-guide {
+    background: repeating-linear-gradient(90deg, var(--border-bright) 0 2px, transparent 2px 6px);
+}
+
+/* the neutral band is a filled region, so give its swatch some height */
+.osc-swatch-zone {
+    height: 9px;
+    border-radius: 2px;
+    background: var(--blue-dim);
+}
+
+.osc-swatch-macd {
+    background: var(--blue);
+}
+
+.osc-swatch-signal {
+    background: #f5a623;
+}
+
+/* the histogram is a block of bars, so give its swatch some height and its green/red split */
+.osc-swatch-hist {
+    height: 9px;
+    border-radius: 2px;
+    opacity: 0.7;
+    background: linear-gradient(90deg, var(--up) 0 50%, var(--down) 50% 100%);
+}

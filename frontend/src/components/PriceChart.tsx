@@ -1,20 +1,12 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { PricePoint } from '../types'
-import {fmtDecimal} from '../format'
+import {axisTimeLabels, fmtDecimal} from '../format'
 
 const H = 220
 const PAD = { top: 14, right: 16, bottom: 22, left: 56 }
 
 function fmtPrice(v: number): string {
     return fmtDecimal(v)
-}
-
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
-
-function fmtTime(iso: string): string {
-    return new Date(iso).toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false})
 }
 
 export type ChartMode = 'line' | 'candles'
@@ -76,9 +68,8 @@ export function PriceChart({points, currency, mode = 'line', live, overlays}: Pr
         rows.push({o: p.open ?? c, h: p.high ?? c, l: p.low ?? c, c})
         times.push(p.time)
     }
-    const spanMs = times.length > 1 ? Date.parse(times[times.length - 1]) - Date.parse(times[0]) : 0
-        const fmt = spanMs > 0 && spanMs < 36 * 3600 * 1000 ? fmtTime : fmtDate
-        return rows.map((r, i) => ({...r, label: fmt(times[i])}))
+        const labels = axisTimeLabels(times)
+        return rows.map((r, i) => ({...r, label: labels[i]}))
   }, [points])
 
   const geometry = useMemo(() => {

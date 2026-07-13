@@ -10,7 +10,7 @@ const PAD = {top: 16, right: 16, bottom: 24, left: 52}
 export const REGION_ORDER: MarketRegion[] = ['Americas', 'Europe', 'Asia']
 const REGION_COLORS: Record<MarketRegion, string[]> = {
     Americas: ['#33aae0', '#0091d5', '#3f6bd6'],
-    Europe: ['#8a6fe0', '#b39cf0'],
+    Europe: ['#8a6fe0', '#6f4fd0', '#c08fe8', '#d98fd0'],
     Asia: ['#58d18b', '#2bb6a6', '#a3d977'],
 }
 

@@ -33,13 +33,15 @@ data class MarketIndex(
  */
 object IndexCatalog {
     val indices: List<MarketIndex> = listOf(
-        MarketIndex("spx", "S&P 500", IndexRegion.AMERICAS, "US500.I", "xnys"),
-        MarketIndex("nas100", "Nasdaq 100", IndexRegion.AMERICAS, "USNAS100.I", "xnas"),
-        MarketIndex("dji", "Dow Jones", IndexRegion.AMERICAS, "US30.I", "xnys"),
+        MarketIndex("spx", "US 500", IndexRegion.AMERICAS, "US500.I", "xnys"),
+        MarketIndex("nas100", "US Tech 100 NAS", IndexRegion.AMERICAS, "USNAS100.I", "xnas"),
+        MarketIndex("dji", "US 30 Wall Street", IndexRegion.AMERICAS, "US30.I", "xnys"),
         MarketIndex("ger40", "Germany 40", IndexRegion.EUROPE, "GER40.I", "xetr"),
-        MarketIndex("c25", "OMX C25", IndexRegion.EUROPE, "DEN25.I", "xcse"),
-        MarketIndex("n225", "Nikkei 225", IndexRegion.ASIA, "JP225.I", "xtks"),
-        MarketIndex("hsi", "Hang Seng", IndexRegion.ASIA, "HK50.I", "xhkg"),
+        MarketIndex("eu50", "EU Stocks 50", IndexRegion.EUROPE, "EU50.I", "xetr"),
+        MarketIndex("cac40", "France 40", IndexRegion.EUROPE, "FRA40.I", "xpar"),
+        MarketIndex("c25", "Denmark 25", IndexRegion.EUROPE, "DEN25.I", "xcse"),
+        MarketIndex("n225", "Japan 225", IndexRegion.ASIA, "JP225.I", "xtks"),
+        MarketIndex("hsi", "Hong Kong 50", IndexRegion.ASIA, "HK50.I", "xhkg"),
         MarketIndex("aus200", "Australia 200", IndexRegion.ASIA, "AUS200.I", "xasx"),
     )
 }

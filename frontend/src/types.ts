@@ -54,6 +54,17 @@ export interface PriceHistory {
     points: PricePoint[]
 }
 
+export type MarketRegion = 'Americas' | 'Europe' | 'Asia'
+
+export interface IndexSeries {
+    key: string
+    name: string
+    region: MarketRegion
+    currency: string | null
+    marketOpen: boolean
+    points: PricePoint[]
+}
+
 // How a raw numeric fundamentals value should be rendered (mirrors the backend StatUnit enum).
 export type StatUnit = 'RATIO' | 'PERCENT' | 'MONEY' | 'MONEY_BILLIONS'
 

@@ -1,4 +1,12 @@
-import type {EnvironmentInfo, Fundamentals, Instrument, PriceHistory, Signals, PortfolioEntry} from './types'
+import type {
+    EnvironmentInfo,
+    Fundamentals,
+    IndexSeries,
+    Instrument,
+    PriceHistory,
+    Signals,
+    PortfolioEntry
+} from './types'
 
 const BASE = '/api'
 
@@ -45,6 +53,8 @@ export const api = {
     },
 
     getPortfolio: () => request<PortfolioEntry[]>('/portfolio'),
+
+    getIndices: () => request<IndexSeries[]>('/indices'),
 
     addToPortfolio: (uic: number, assetType: string, quantity: number, openingPrice: number) =>
         request<PortfolioEntry>('/portfolio', {

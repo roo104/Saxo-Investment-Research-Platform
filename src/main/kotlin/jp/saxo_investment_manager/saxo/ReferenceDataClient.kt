@@ -19,12 +19,15 @@ class ReferenceDataClient(private val saxoWebClient: WebClient) {
      * @param assetTypes comma-separated Saxo asset types to restrict to, e.g. "Stock,ETF".
      * @param exchangeId restrict to a single exchange, e.g. "NASDAQ".
      * @param top maximum number of results to return.
+     * @param includeNonTradable when true, also return instruments not tradable on this account
+     *  (e.g. some index CFDs in simulation) — they still carry reference data and chart history.
      */
     suspend fun searchInstruments(
         keywords: String?,
         assetTypes: String?,
         exchangeId: String?,
         top: Int = 20,
+        includeNonTradable: Boolean = false,
     ): List<InstrumentSummary> =
         saxoWebClient.get()
             .uri { builder ->
@@ -32,6 +35,7 @@ class ReferenceDataClient(private val saxoWebClient: WebClient) {
                 if (!keywords.isNullOrBlank()) builder.queryParam("Keywords", keywords)
                 if (!assetTypes.isNullOrBlank()) builder.queryParam("AssetTypes", assetTypes)
                 if (!exchangeId.isNullOrBlank()) builder.queryParam("ExchangeId", exchangeId)
+                if (includeNonTradable) builder.queryParam("IncludeNonTradable", true)
                 builder.build()
             }
             .retrieve()

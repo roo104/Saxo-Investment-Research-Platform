@@ -3,6 +3,7 @@ import {api, ApiError} from './api'
 import {EnvironmentBadge} from './components/EnvironmentBadge'
 import {SearchPanel} from './components/SearchPanel'
 import {AllocationOverview} from './components/AllocationOverview'
+import {MarketsOverview} from './components/MarketsOverview'
 import {Portfolio} from './components/Portfolio'
 import type {EnvironmentInfo, Instrument, PriceTick, PortfolioEntry} from './types'
 
@@ -107,9 +108,10 @@ export default function App() {
 
             <main className="stack">
                 <SearchPanel onAdd={handleAdd} isOnPortfolio={isOnPortfolio}/>
-                {entries.length > 0 && <AllocationOverview entries={entries}/>}
                 <Portfolio entries={entries} loading={loading} error={error} streaming={streaming}
                            onRemove={handleRemove}/>
+                {entries.length > 0 && <AllocationOverview entries={entries}/>}
+                <MarketsOverview/>
             </main>
 
             <p className="footer-note">

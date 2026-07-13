@@ -11,7 +11,6 @@ import jp.saxo_investment_manager.fundamentals.FundamentalsProvider
 import jp.saxo_investment_manager.market.MarketCalendar
 import jp.saxo_investment_manager.signals.SignalEngine
 import jp.saxo_investment_manager.saxo.ChartClient
-import jp.saxo_investment_manager.saxo.ChartSample
 import jp.saxo_investment_manager.saxo.InfoPrice
 import jp.saxo_investment_manager.saxo.PricingClient
 import jp.saxo_investment_manager.portfolio.PortfolioItem
@@ -207,21 +206,6 @@ private const val SIGNAL_WARMUP = 200
 
 /** Saxo's `/chart/v3/charts` caps `Count` at 1200 candles per request. */
 private const val SAXO_MAX_CANDLES = 1200
-
-/** Direct value if present (securities), otherwise the bid/ask mid (FX and other quote instruments). */
-private fun mid(direct: Double?, bid: Double?, ask: Double?): Double? = when {
-    direct != null -> direct
-    bid != null && ask != null -> (bid + ask) / 2
-    else -> bid ?: ask
-}
-
-private fun ChartSample.toPoint() = PricePoint(
-    time = time,
-    open = mid(open, openBid, openAsk),
-    high = mid(high, highBid, highAsk),
-    low = mid(low, lowBid, lowAsk),
-    close = mid(close, closeBid, closeAsk),
-)
 
 class PortfolioItemNotFoundException(id: Long) : RuntimeException("Portfolio item $id was not found")
 

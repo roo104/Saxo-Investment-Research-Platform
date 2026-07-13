@@ -1165,6 +1165,196 @@ body {
     font-family: var(--font-ui);
 }
 
+/* ------------------------- world markets ---------------------------- */
+
+.markets-body {
+    padding: 16px 20px 20px;
+}
+
+.markets-chart {
+    position: relative;
+    width: 100%;
+}
+
+.markets-svg {
+    display: block;
+    width: 100%;
+    height: 260px;
+    max-width: 100%;
+    overflow: visible;
+}
+
+/* the rebasing reference every line starts from (0%) */
+.markets-zero {
+    stroke: var(--border-bright);
+    stroke-width: 1;
+    opacity: 0.9;
+}
+
+.markets-series {
+    transition: opacity 0.15s ease;
+}
+
+.markets-line {
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    opacity: 0.95;
+    transition: stroke-width 0.12s ease;
+}
+
+.markets-dot {
+    stroke: var(--bg);
+    stroke-width: 1.5;
+}
+
+.markets-dot-live {
+    stroke: var(--bg);
+    stroke-width: 1.5;
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+/* hovered-time readout below the chart */
+.markets-tip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    align-items: baseline;
+    margin-top: 10px;
+    min-height: 18px;
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+.markets-tip-time {
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+}
+
+.markets-tip-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.markets-tip-swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+}
+
+.markets-tip strong.up {
+    color: var(--up);
+}
+
+.markets-tip strong.down {
+    color: var(--down);
+}
+
+/* region-grouped legend beneath the chart */
+.markets-legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+@media (max-width: 720px) {
+    .markets-legend {
+        grid-template-columns: 1fr;
+    }
+}
+
+.markets-legend-group h3 {
+    margin: 0 0 10px;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+}
+
+.markets-legend-group ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.markets-legend-group li {
+    display: grid;
+    grid-template-columns: 10px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+}
+
+/* clickable legend rows: click toggles the line, hover/focus highlights it */
+.markets-legend-item {
+    cursor: pointer;
+    padding: 3px 6px;
+    margin: -3px -6px;
+    border-radius: 6px;
+    transition: background 0.12s ease, opacity 0.12s ease;
+}
+
+.markets-legend-item:hover,
+.markets-legend-item:focus-visible {
+    background: var(--bg-elev-2);
+    outline: none;
+}
+
+/* toggled-off market: muted, hollow swatch, struck-through name */
+.markets-legend-item.is-off {
+    opacity: 0.5;
+}
+
+.markets-legend-item.is-off .markets-swatch {
+    background: transparent !important;
+    box-shadow: inset 0 0 0 1.5px var(--text-faint);
+}
+
+.markets-legend-item.is-off .markets-name {
+    text-decoration: line-through;
+    color: var(--text-faint);
+}
+
+.markets-legend-item.is-off .markets-pct {
+    color: var(--text-faint) !important;
+}
+
+.markets-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.markets-name {
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.markets-pct {
+    font-size: 12.5px;
+    justify-self: end;
+}
+
+.markets-pct.up {
+    color: var(--up);
+}
+
+.markets-pct.down {
+    color: var(--down);
+}
+
 /* --------------------------- empty / error -------------------------- */
 
 .empty {

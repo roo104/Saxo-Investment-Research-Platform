@@ -104,6 +104,24 @@ data class PriceHistoryDto(
     val points: List<PricePoint>,
 )
 
+@Schema(
+    description = "One market index's recent intraday price series for the 24h markets overview. " +
+            "Closes are raw index levels; the frontend rebases each series to a % change so indices " +
+            "with very different levels share one scale."
+)
+data class IndexSeriesDto(
+    @get:Schema(description = "Stable client key", example = "spx")
+    val key: String,
+    @get:Schema(example = "S&P 500")
+    val name: String,
+    @get:Schema(description = "Region grouping", example = "Americas")
+    val region: String,
+    val currency: String?,
+    @get:Schema(description = "Whether the index's market is currently open (regular session hours)")
+    val marketOpen: Boolean,
+    val points: List<PricePoint>,
+)
+
 @Schema(description = "A streamed live-price update for one instrument, pushed over SSE.")
 data class PriceTick(
     val uic: Long,

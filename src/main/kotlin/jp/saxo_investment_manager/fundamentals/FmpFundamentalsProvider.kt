@@ -6,6 +6,7 @@ import jp.saxo_investment_manager.api.FinancialStatements
 import jp.saxo_investment_manager.api.Fundamentals
 import jp.saxo_investment_manager.api.KeyStat
 import jp.saxo_investment_manager.api.StatUnit
+import jp.saxo_investment_manager.config.outboundLoggingFilter
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.slf4j.LoggerFactory
@@ -30,8 +31,13 @@ class FmpFundamentalsProvider(
     private val properties: FmpProperties,
 ) : FundamentalsProvider {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val equityTypes = setOf("Stock", "CfdOnStock")
-    private val client: WebClient by lazy { WebClient.builder().baseUrl(properties.baseUrl).build() }
+    private val equityTypes = setOf("Stock")
+    private val client: WebClient by lazy {
+        WebClient.builder()
+            .baseUrl(properties.baseUrl)
+            .filter(outboundLoggingFilter("FMP", log))
+            .build()
+    }
 
     init {
         require(properties.apiKey.isNotBlank()) {

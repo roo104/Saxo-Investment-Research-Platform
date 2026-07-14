@@ -49,7 +49,7 @@ class WebClientConfig(
             .baseUrl(properties.environment.restBaseUrl)
             .clientConnector(ReactorClientHttpConnector(httpClient))
             .filter(bearerTokenFilter())
-            .filter(loggingFilter())
+            .filter(outboundLoggingFilter("Saxo", log))
             .build()
     }
 
@@ -60,13 +60,6 @@ class WebClientConfig(
             ClientRequest.from(request)
                 .headers { it.setBearerAuth(token) }
                 .build()
-        }
-    }
-
-    private fun loggingFilter() = ExchangeFilterFunction.ofRequestProcessor { request ->
-        mono {
-            log.debug("→ Saxo {} {}", request.method(), request.url())
-            request
         }
     }
 }

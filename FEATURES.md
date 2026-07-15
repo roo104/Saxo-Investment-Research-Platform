@@ -64,14 +64,14 @@ it.
 
 ## 5. Portfolio & accounts
 
-| Feature                            | Status | Notes                                       |
-|------------------------------------|--------|---------------------------------------------|
-| Account balance & cash             | ⬜      | `port/v1/balances`                          |
-| Open positions & net positions     | ⬜      | `port/v1/positions`, `port/v1/netpositions` |
-| Orders (open / filled / cancelled) | ⬜      | `port/v1/orders`, `port/v1/closedpositions` |
-| Account & client switching         | ⬜      | `port/v1/accounts`, `port/v1/clients`       |
-| Performance & returns over time    | ⬜      | `hist/v3/performance`, `hist/v4/positions`  |
-| Live P&L (streaming)               | ⬜      | position subscriptions                      |
+| Feature                            | Status | Notes                                                                                      |
+|------------------------------------|--------|--------------------------------------------------------------------------------------------|
+| Account balance & cash             | ✅      | `port/v1/balances/me` → `GET /api/account` (total value, cash, unrealised P/L, open count) |
+| Open positions & net positions     | ✅      | `port/v1/netpositions/me` → `GET /api/account/positions` (per-position market value + P/L) |
+| Orders (open / filled / cancelled) | ⬜      | `port/v1/orders`, `port/v1/closedpositions`                                                |
+| Account & client switching         | 🟡     | accounts listed in the overview; no multi-account switcher yet (`port/v1/accounts`)        |
+| Performance & returns over time    | ⬜      | `hist/v3/performance`, `hist/v4/positions`                                                 |
+| Live P&L (streaming)               | ⬜      | position subscriptions; the Accounts panel polls (~30s) rather than streaming for now      |
 
 ## 6. Trading & orders *(live only — requires real auth + confirmations)*
 
@@ -144,8 +144,9 @@ it.
 
 - **Phase 1 — Research (now):** search ✅, portfolio ✅, quotes ✅, charts ✅. Next: instrument
   detail, candlestick view, indicators, multiple portfolios.
-- **Phase 2 — Real-time & portfolio:** live price streaming ✅ (WebSocket → SSE). Next: streaming
-  charts, read-only portfolio (balances, positions, performance), and price alerts.
+- **Phase 2 — Real-time & portfolio:** live price streaming ✅ (WebSocket → SSE), streaming charts ✅,
+  read-only account (balance + net positions) ✅. Next: performance/returns history, live P&L
+  streaming, and price alerts.
 - **Phase 3 — Trading (live):** OAuth/PKCE auth, pre-trade cost/margin, order placement with
   confirmations — simulation-first, then gated live.
 - **Phase 4 — Retail polish:** screening, news/fundamentals, risk analytics, multi-user, alerts
@@ -172,13 +173,13 @@ server (WebSocket). The "Used here" column links back to the sections above.
 
 ### Core trading & market data
 
-| Service group                | Key resources / capabilities                                                                                                                                              | Used here            |
-|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|
-| **Root Services** (`root/v1`) | Sessions & session capabilities, trade-session mode (arm for full trading), central subscription management, feature availability, diagnostics                             | ✅ streaming infra    |
-| **Reference Data** (`ref/v1`) | Instruments (details/summaries, search), option roots, option/futures spaces, exchanges, countries, currencies, currency pairs, cultures, languages, time zones, standard dates, algo strategies | ✅ §1 search          |
-| **Trading** (`trade/v1/v2`)   | InfoPrices/Prices (snapshot + streaming quotes, greeks), Orders (market/limit/stop/trailing/OCO/related), Algo orders, Multi-leg option strategies, Options chain, Block orders, Positions (incl. option exercise), Messages, pre-trade disclaimers & return codes | 🟡 §2 prices, §6 planned |
-| **Chart** (`chart/v3`)        | Historical OHLC candles (1m → monthly), snapshot + streaming updates                                                                                                      | ✅ §3 charts          |
-| **Portfolio** (`port/v1`)     | Users, Clients, Accounts, Balances, Positions, NetPositions, ClosedPositions, Orders, Exposure, expandable positions tree                                                  | ⬜ §5 planned         |
+| Service group                 | Key resources / capabilities                                                                                                                                                                                                                                       | Used here                           |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------|
+| **Root Services** (`root/v1`) | Sessions & session capabilities, trade-session mode (arm for full trading), central subscription management, feature availability, diagnostics                                                                                                                     | ✅ streaming infra                   |
+| **Reference Data** (`ref/v1`) | Instruments (details/summaries, search), option roots, option/futures spaces, exchanges, countries, currencies, currency pairs, cultures, languages, time zones, standard dates, algo strategies                                                                   | ✅ §1 search                         |
+| **Trading** (`trade/v1/v2`)   | InfoPrices/Prices (snapshot + streaming quotes, greeks), Orders (market/limit/stop/trailing/OCO/related), Algo orders, Multi-leg option strategies, Options chain, Block orders, Positions (incl. option exercise), Messages, pre-trade disclaimers & return codes | 🟡 §2 prices, §6 planned            |
+| **Chart** (`chart/v3`)        | Historical OHLC candles (1m → monthly), snapshot + streaming updates                                                                                                                                                                                               | ✅ §3 charts                         |
+| **Portfolio** (`port/v1`)     | Users, Clients, Accounts, Balances, Positions, NetPositions, ClosedPositions, Orders, Exposure, expandable positions tree                                                                                                                                          | 🟡 §5 accounts/balance/netpositions |
 
 ### History, reporting & client lifecycle
 

@@ -100,6 +100,47 @@ export interface Fundamentals {
     perQuarter: FinancialStatements
 }
 
+export interface Account {
+    accountId: string
+    currency: string | null
+    accountType: string | null
+    active: boolean
+}
+
+export interface AccountBalance {
+    currency: string | null
+    cashBalance: number | null
+    totalValue: number | null
+    nonMarginPositionsValue: number | null
+    unrealizedPositionsValue: number | null
+    marginAvailable: number | null
+    marginUsed: number | null
+    openPositionsCount: number | null
+}
+
+export interface AccountOverview {
+    accounts: Account[]
+    balance: AccountBalance
+}
+
+export interface Position {
+    netPositionId: string
+    uic: number
+    symbol: string
+    description: string
+    assetType: string
+    currency: string | null
+    amount: number | null
+    openingDirection: string | null
+    averageOpenPrice: number | null
+    currentPrice: number | null
+    marketValue: number | null
+    profitLoss: number | null
+    // Raw ratios (e.g. 0.1667 = +16.67%); the client localises them.
+    profitLossPct: number | null
+    dayChangePct: number | null
+}
+
 export interface PriceTick {
     uic: number
     assetType: string

@@ -1,8 +1,10 @@
 import type {
+    AccountOverview,
     EnvironmentInfo,
     Fundamentals,
     IndexSeries,
     Instrument,
+    Position,
     PriceHistory,
     Signals,
     PortfolioEntry
@@ -55,6 +57,10 @@ export const api = {
     getPortfolio: () => request<PortfolioEntry[]>('/portfolio'),
 
     getIndices: () => request<IndexSeries[]>('/indices'),
+
+    getAccount: () => request<AccountOverview>('/account'),
+
+    getPositions: () => request<Position[]>('/account/positions'),
 
     addToPortfolio: (uic: number, assetType: string, quantity: number, openingPrice: number) =>
         request<PortfolioEntry>('/portfolio', {

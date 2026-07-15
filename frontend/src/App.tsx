@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {api, ApiError} from './api'
 import {EnvironmentBadge} from './components/EnvironmentBadge'
+import {Accounts} from './components/Accounts'
 import {SearchPanel} from './components/SearchPanel'
 import {AllocationOverview} from './components/AllocationOverview'
 import {MarketsOverview} from './components/MarketsOverview'
@@ -108,6 +109,7 @@ export default function App() {
 
             <main className="stack">
                 <SearchPanel onAdd={handleAdd} isOnPortfolio={isOnPortfolio}/>
+                <Accounts/>
                 <Portfolio entries={entries} loading={loading} error={error} streaming={streaming}
                            onRemove={handleRemove}/>
                 {entries.length > 0 && <AllocationOverview entries={entries}/>}

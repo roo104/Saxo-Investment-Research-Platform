@@ -1815,3 +1815,67 @@ body {
     opacity: 0.7;
     background: linear-gradient(90deg, var(--up) 0 50%, var(--down) 50% 100%);
 }
+
+/* ----------------------------- accounts ----------------------------- */
+
+.acct-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.acct-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 12px 14px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.acct-kpi-label {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+}
+
+.acct-kpi-value {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.acct-kpi-value.up,
+.acct-positions .num.up {
+    color: var(--up);
+}
+
+.acct-kpi-value.down,
+.acct-positions .num.down {
+    color: var(--down);
+}
+
+.acct-positions td:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.acct-sym {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.acct-desc {
+    color: var(--text-faint);
+    font-size: 11px;
+}
+
+.acct-pl-pct {
+    color: var(--text-dim);
+    font-size: 11px;
+}

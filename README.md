@@ -140,6 +140,8 @@ then restart. The environment badge turns red to make the active environment unm
 | `GET /api/portfolio/stream`            | **SSE** stream of live prices for portfolio instruments      |
 | `GET /api/portfolio/{id}/chart/stream` | **SSE** stream of live OHLC candles (`horizon`, `count`)     |
 | `GET /api/portfolio/{id}/fundamentals` | Company key stats & financials (live from FMP — see note)    |
+| `GET /api/account`                     | Read-only account overview: accounts + aggregate balance     |
+| `GET /api/account/positions`           | Open net positions valued with current prices (P/L per line) |
 | `GET /api/environment`                 | The active Saxo environment                                  |
 
 Errors are returned as RFC-7807 `application/problem+json`. An upstream Saxo error (e.g. an expired

@@ -154,3 +154,77 @@ data class EnvironmentDto(
     @get:Schema(example = "https://gateway.saxobank.com/sim/openapi")
     val restBaseUrl: String,
 )
+
+@Schema(description = "A trading account belonging to the authenticated Saxo user.")
+data class AccountDto(
+    @get:Schema(example = "9226248")
+    val accountId: String,
+    @get:Schema(example = "USD")
+    val currency: String?,
+    @get:Schema(description = "Saxo account classification", example = "Normal")
+    val accountType: String?,
+    val active: Boolean,
+)
+
+@Schema(
+    description = "Aggregate cash and value balance for the authenticated user's account context. " +
+            "All amounts are in the account's base currency."
+)
+data class AccountBalanceDto(
+    @get:Schema(example = "USD")
+    val currency: String?,
+    @get:Schema(description = "Settled cash on the account", example = "100000.0")
+    val cashBalance: Double?,
+    @get:Schema(description = "Cash plus the value of all open positions", example = "117500.0")
+    val totalValue: Double?,
+    @get:Schema(description = "Value of positions held outright (non-margin)", example = "17500.0")
+    val nonMarginPositionsValue: Double?,
+    @get:Schema(description = "Unrealised P/L across open positions", example = "2500.0")
+    val unrealizedPositionsValue: Double?,
+    @get:Schema(description = "Margin still available to open new positions")
+    val marginAvailable: Double?,
+    @get:Schema(description = "Margin currently tied up by open positions")
+    val marginUsed: Double?,
+    @get:Schema(description = "Number of open positions the balance reflects", example = "3")
+    val openPositionsCount: Int?,
+)
+
+@Schema(description = "Account overview: the accounts on the client plus their aggregate balance.")
+data class AccountOverviewDto(
+    val accounts: List<AccountDto>,
+    val balance: AccountBalanceDto,
+)
+
+@Schema(
+    description = "A single open net position (all fills in one instrument aggregated). Prices and " +
+            "values are in the position's instrument currency; percentages are raw ratios the " +
+            "frontend localises."
+)
+data class PositionDto(
+    @get:Schema(description = "Saxo net-position identifier", example = "211__Stock")
+    val netPositionId: String,
+    val uic: Long,
+    @get:Schema(example = "AAPL:xnas")
+    val symbol: String,
+    @get:Schema(example = "Apple Inc.")
+    val description: String,
+    @get:Schema(example = "Stock")
+    val assetType: String,
+    val currency: String?,
+    @get:Schema(description = "Units held; negative when the net position is short", example = "100")
+    val amount: Double?,
+    @get:Schema(description = "Long or Short", example = "Buy")
+    val openingDirection: String?,
+    @get:Schema(description = "Volume-weighted average price the position was opened at", example = "150.0")
+    val averageOpenPrice: Double?,
+    @get:Schema(description = "Latest price used to value the position", example = "175.0")
+    val currentPrice: Double?,
+    @get:Schema(description = "Current market value of the position", example = "17500.0")
+    val marketValue: Double?,
+    @get:Schema(description = "Unrealised profit/loss on the position", example = "2500.0")
+    val profitLoss: Double?,
+    @get:Schema(description = "Unrealised P/L as a raw ratio of cost basis, e.g. 0.1667 = +16.67%", example = "0.1667")
+    val profitLossPct: Double?,
+    @get:Schema(description = "Instrument price change on the day, as a raw ratio", example = "0.012")
+    val dayChangePct: Double?,
+)

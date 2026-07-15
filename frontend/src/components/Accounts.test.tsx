@@ -39,7 +39,7 @@ const overview: AccountOverview = {
     accounts: [{accountId: '9226248', currency: 'USD', accountType: 'Normal', active: true}],
     balance: {
         currency: 'USD', cashBalance: 100000, totalValue: 117500,
-        nonMarginPositionsValue: 17500, unrealizedPositionsValue: 2500,
+        nonMarginPositionsValue: 17500,
         marginAvailable: 95000, marginUsed: 5000, openPositionsCount: 1,
     },
 }
@@ -48,7 +48,7 @@ const position: Position = {
     netPositionId: '211__Stock', uic: 211, symbol: 'AAPL:xnas', description: 'Apple Inc.',
     assetType: 'Stock', currency: 'USD', amount: 100, openingDirection: 'Buy',
     averageOpenPrice: 150, currentPrice: 175, marketValue: 17500,
-    profitLoss: 2500, profitLossPct: 0.1667, dayChangePct: 0.012,
+    profitLoss: 2500, profitLossBase: 2500, profitLossPct: 0.1667, dayChangePct: 0.012,
 }
 
 describe('Accounts', () => {
@@ -70,6 +70,11 @@ describe('Accounts', () => {
         const plCell = container.querySelector('.acct-positions td.up')
         expect(plCell).not.toBeNull()
         expect(plCell!.textContent).toContain('+16.67%')
+
+        // The account-level "Unrealised P/L" KPI sums position P/L (2,500), not the position value (17,500).
+        const kpis = [...container.querySelectorAll('.acct-kpi')]
+        const plKpi = kpis.find((k) => k.querySelector('.acct-kpi-label')?.textContent === 'Unrealised P/L')
+        expect(plKpi?.querySelector('.acct-kpi-value')?.textContent).toMatch(/2,?500\.00 USD/)
     })
 
     it('shows an empty state when there are no open positions', async () => {

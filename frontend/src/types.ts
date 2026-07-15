@@ -112,7 +112,6 @@ export interface AccountBalance {
     cashBalance: number | null
     totalValue: number | null
     nonMarginPositionsValue: number | null
-    unrealizedPositionsValue: number | null
     marginAvailable: number | null
     marginUsed: number | null
     openPositionsCount: number | null
@@ -136,6 +135,8 @@ export interface Position {
     currentPrice: number | null
     marketValue: number | null
     profitLoss: number | null
+    // P/L converted to the account base currency; summed for the account-level unrealised P/L.
+    profitLossBase: number | null
     // Raw ratios (e.g. 0.1667 = +16.67%); the client localises them.
     profitLossPct: number | null
     dayChangePct: number | null

@@ -80,7 +80,12 @@ export function Accounts() {
     const balance = overview?.balance
     const account = overview?.accounts.find((a) => a.active) ?? overview?.accounts[0] ?? null
     const ccy = balance?.currency ?? account?.currency ?? null
-    const unrealized = balance?.unrealizedPositionsValue
+    // Account-level unrealised P/L is the sum of each position's P/L in the account base currency.
+    // Saxo's balance has no honest field for this — its UnrealizedPositionsValue is a position value,
+    // not a gain/loss — so we aggregate the positions we already hold.
+    const unrealized = positions.length
+        ? positions.reduce((sum, p) => sum + (p.profitLossBase ?? p.profitLoss ?? 0), 0)
+        : null
 
     return (
         <section className="panel accounts">

@@ -66,7 +66,7 @@ class AccountClientTest {
             MockResponse().addHeader("Content-Type", "application/json").setBody(
                 """
                 {"Currency":"USD","CashBalance":100000.0,"TotalValue":117500.0,
-                 "NonMarginPositionsValue":17500.0,"UnrealizedPositionsValue":2500.0,
+                 "NonMarginPositionsValue":17500.0,
                  "MarginAvailableForTrading":95000.0,"MarginUsedByCurrentPositions":5000.0,
                  "OpenPositionsCount":2}
                 """.trimIndent(),
@@ -91,8 +91,8 @@ class AccountClientTest {
                   {"NetPositionId":"211__Stock",
                    "NetPositionBase":{"Uic":211,"AssetType":"Stock","Amount":100,"OpeningDirection":"Buy"},
                    "NetPositionView":{"AverageOpenPrice":150.0,"CurrentPrice":175.0,"MarketValue":17500.0,
-                     "ProfitLossOnTrade":2500.0,"Exposure":17500.0,"ExposureCurrency":"USD",
-                     "InstrumentPriceDayPercentChange":1.2},
+                     "ProfitLossOnTrade":2500.0,"ProfitLossOnTradeInBaseCurrency":2500.0,
+                     "Exposure":17500.0,"ExposureCurrency":"USD","InstrumentPriceDayPercentChange":1.2},
                    "DisplayAndFormat":{"Currency":"USD","Description":"Apple Inc.","Symbol":"AAPL:xnas"}}
                 ]}
                 """.trimIndent(),
@@ -106,6 +106,7 @@ class AccountClientTest {
         assertEquals(211, pos.base?.uic)
         assertEquals(100.0, pos.base?.amount)
         assertEquals(2500.0, pos.view?.profitLossOnTrade)
+        assertEquals(2500.0, pos.view?.profitLossOnTradeInBaseCurrency)
         assertEquals("AAPL:xnas", pos.displayAndFormat?.symbol)
 
         val request = server.takeRequest()

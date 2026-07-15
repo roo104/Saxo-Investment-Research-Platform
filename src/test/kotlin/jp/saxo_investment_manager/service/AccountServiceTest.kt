@@ -50,7 +50,8 @@ class AccountServiceTest {
                 base = NetPositionBase(uic = 211, assetType = "Stock", amount = 100.0, openingDirection = "Buy"),
                 view = NetPositionView(
                     averageOpenPrice = 150.0, currentPrice = 175.0, marketValue = 17500.0,
-                    profitLossOnTrade = 2500.0, instrumentPriceDayPercentChange = 1.2,
+                    profitLossOnTrade = 2500.0, profitLossOnTradeInBaseCurrency = 2400.0,
+                    instrumentPriceDayPercentChange = 1.2,
                 ),
                 displayAndFormat = DisplayAndFormat(currency = "USD", description = "Apple Inc.", symbol = "AAPL:xnas"),
             ),
@@ -60,6 +61,8 @@ class AccountServiceTest {
 
         assertEquals("AAPL:xnas", pos.symbol)
         assertEquals(2500.0, pos.profitLoss)
+        // Base-currency P/L is passed through verbatim for account-level aggregation.
+        assertEquals(2400.0, pos.profitLossBase)
         // 2500 / (150 * 100) = 0.1667
         assertEquals(0.1667, pos.profitLossPct!!, 1e-4)
         // 1.2% expressed as a ratio

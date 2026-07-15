@@ -179,8 +179,6 @@ data class AccountBalanceDto(
     val totalValue: Double?,
     @get:Schema(description = "Value of positions held outright (non-margin)", example = "17500.0")
     val nonMarginPositionsValue: Double?,
-    @get:Schema(description = "Unrealised P/L across open positions", example = "2500.0")
-    val unrealizedPositionsValue: Double?,
     @get:Schema(description = "Margin still available to open new positions")
     val marginAvailable: Double?,
     @get:Schema(description = "Margin currently tied up by open positions")
@@ -221,8 +219,14 @@ data class PositionDto(
     val currentPrice: Double?,
     @get:Schema(description = "Current market value of the position", example = "17500.0")
     val marketValue: Double?,
-    @get:Schema(description = "Unrealised profit/loss on the position", example = "2500.0")
+    @get:Schema(description = "Unrealised profit/loss on the position, in the instrument currency", example = "2500.0")
     val profitLoss: Double?,
+    @get:Schema(
+        description = "Unrealised profit/loss on the position converted to the account's base currency; " +
+                "summed across positions to give the account-level unrealised P/L",
+        example = "2500.0",
+    )
+    val profitLossBase: Double?,
     @get:Schema(description = "Unrealised P/L as a raw ratio of cost basis, e.g. 0.1667 = +16.67%", example = "0.1667")
     val profitLossPct: Double?,
     @get:Schema(description = "Instrument price change on the day, as a raw ratio", example = "0.012")

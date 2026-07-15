@@ -44,7 +44,7 @@ class AccountControllerTest(
             ),
             balance = AccountBalanceDto(
                 currency = "USD", cashBalance = 100000.0, totalValue = 117500.0,
-                nonMarginPositionsValue = 17500.0, unrealizedPositionsValue = 2500.0,
+                nonMarginPositionsValue = 17500.0,
                 marginAvailable = 95000.0, marginUsed = 5000.0, openPositionsCount = 2,
             ),
         )
@@ -63,7 +63,7 @@ class AccountControllerTest(
                 netPositionId = "211__Stock", uic = 211, symbol = "AAPL:xnas", description = "Apple Inc.",
                 assetType = "Stock", currency = "USD", amount = 100.0, openingDirection = "Buy",
                 averageOpenPrice = 150.0, currentPrice = 175.0, marketValue = 17500.0,
-                profitLoss = 2500.0, profitLossPct = 0.1667, dayChangePct = 0.012,
+                profitLoss = 2500.0, profitLossBase = 2500.0, profitLossPct = 0.1667, dayChangePct = 0.012,
             ),
         )
 

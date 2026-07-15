@@ -18,7 +18,6 @@ internal fun AccountBalance.toDto() = AccountBalanceDto(
     cashBalance = cashBalance,
     totalValue = totalValue,
     nonMarginPositionsValue = nonMarginPositionsValue,
-    unrealizedPositionsValue = unrealizedPositionsValue,
     marginAvailable = marginAvailableForTrading,
     marginUsed = marginUsedByCurrentPositions,
     openPositionsCount = openPositionsCount,
@@ -45,6 +44,7 @@ internal fun NetPosition.toDto(): PositionDto {
         currentPrice = view?.currentPrice,
         marketValue = view?.marketValue,
         profitLoss = pnl,
+        profitLossBase = view?.profitLossOnTradeInBaseCurrency,
         profitLossPct = pnlPct,
         // Saxo expresses the day change as a percentage number (1.2 = 1.2%); the API contract is a ratio.
         dayChangePct = view?.instrumentPriceDayPercentChange?.let { it / 100.0 },

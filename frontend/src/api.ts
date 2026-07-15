@@ -1,5 +1,6 @@
 import type {
     AccountOverview,
+    ClosedPosition,
     EnvironmentInfo,
     Fundamentals,
     IndexSeries,
@@ -61,6 +62,8 @@ export const api = {
     getAccount: () => request<AccountOverview>('/account'),
 
     getPositions: () => request<Position[]>('/account/positions'),
+
+    getClosedPositions: () => request<ClosedPosition[]>('/account/closed-positions'),
 
     addToPortfolio: (uic: number, assetType: string, quantity: number, openingPrice: number) =>
         request<PortfolioEntry>('/portfolio', {

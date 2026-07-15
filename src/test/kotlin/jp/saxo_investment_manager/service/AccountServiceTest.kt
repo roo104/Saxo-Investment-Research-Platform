@@ -4,6 +4,8 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import jp.saxo_investment_manager.saxo.AccountBalance
 import jp.saxo_investment_manager.saxo.AccountClient
+import jp.saxo_investment_manager.saxo.ClosedPositionData
+import jp.saxo_investment_manager.saxo.ClosedPositionEntry
 import jp.saxo_investment_manager.saxo.DisplayAndFormat
 import jp.saxo_investment_manager.saxo.NetPosition
 import jp.saxo_investment_manager.saxo.NetPositionBase
@@ -84,5 +86,36 @@ class AccountServiceTest {
 
         assertEquals(12.5, pos.profitLoss)
         assertNull(pos.profitLossPct)
+    }
+
+    @Test
+    fun `closed positions map costs and currency-conversion P&L in base currency`() = runBlocking {
+        coEvery { client.closedPositions() } returns listOf(
+            ClosedPositionEntry(
+                closedPositionUniqueId = "1-2",
+                netPositionId = "EURUSD__FxSpot",
+                closed = ClosedPositionData(
+                    uic = 21, assetType = "FxSpot", amount = 100000.0, buyOrSell = "Buy",
+                    openPrice = 1.13054, closingPrice = 1.13025,
+                    costOpeningInBaseCurrency = -5.0, costClosingInBaseCurrency = -4.0,
+                    closedProfitLoss = 29.0, closedProfitLossInBaseCurrency = 25.64,
+                    profitLossCurrencyConversion = -1.2,
+                ),
+                displayAndFormat = DisplayAndFormat(
+                    currency = "USD",
+                    description = "Euro/US Dollar",
+                    symbol = "EURUSD"
+                ),
+            ),
+        )
+
+        val cp = service.closedPositions().single()
+
+        assertEquals("EURUSD", cp.symbol)
+        assertEquals("1-2", cp.closedPositionId)
+        assertEquals(-5.0, cp.openingCost)
+        assertEquals(-4.0, cp.closingCost)
+        assertEquals(25.64, cp.profitLossBase)
+        assertEquals(-1.2, cp.currencyConversionPl)
     }
 }

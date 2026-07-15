@@ -231,4 +231,56 @@ data class PositionDto(
     val profitLossPct: Double?,
     @get:Schema(description = "Instrument price change on the day, as a raw ratio", example = "0.012")
     val dayChangePct: Double?,
+    @get:Schema(
+        description = "Trade costs incurred on the position so far, in the instrument currency",
+        example = "-11.35"
+    )
+    val tradeCosts: Double?,
+    @get:Schema(description = "Trade costs incurred so far, in the account base currency", example = "-10.02")
+    val tradeCostsBase: Double?,
+)
+
+@Schema(
+    description = "A realised (closed) position: one opening fill paired with the close that " +
+            "realised it. Amounts marked 'base' are in the account currency; the rest are in the " +
+            "instrument currency."
+)
+data class ClosedPositionDto(
+    @get:Schema(description = "Stable id pairing the opening and closing fills", example = "212702698-212702774")
+    val closedPositionId: String,
+    val uic: Long?,
+    @get:Schema(example = "AAPL:xnas")
+    val symbol: String,
+    @get:Schema(example = "Apple Inc.")
+    val description: String,
+    @get:Schema(example = "Stock")
+    val assetType: String?,
+    @get:Schema(description = "Instrument currency", example = "USD")
+    val currency: String?,
+    @get:Schema(description = "Units closed; negative when the closed position was short", example = "10")
+    val amount: Double?,
+    @get:Schema(description = "Buy or Sell (the opening direction)", example = "Buy")
+    val buyOrSell: String?,
+    @get:Schema(description = "Price the position was opened at", example = "150.0")
+    val openPrice: Double?,
+    @get:Schema(description = "Price the position was closed at", example = "175.0")
+    val closingPrice: Double?,
+    @get:Schema(description = "When the position was opened (ISO-8601)")
+    val openedAt: String?,
+    @get:Schema(description = "When the position was closed (ISO-8601)")
+    val closedAt: String?,
+    @get:Schema(description = "Opening cost in the account base currency (negative = paid)", example = "-4.63")
+    val openingCost: Double?,
+    @get:Schema(description = "Closing cost in the account base currency (negative = paid)", example = "-4.62")
+    val closingCost: Double?,
+    @get:Schema(description = "Realised P/L in the instrument currency", example = "2500.0")
+    val profitLoss: Double?,
+    @get:Schema(description = "Realised P/L in the account base currency", example = "2185.0")
+    val profitLossBase: Double?,
+    @get:Schema(
+        description = "Realised profit/loss attributable to currency conversion between open and " +
+                "close, in the base currency. Null when Saxo does not report it for the position.",
+        example = "-12.4",
+    )
+    val currencyConversionPl: Double?,
 )

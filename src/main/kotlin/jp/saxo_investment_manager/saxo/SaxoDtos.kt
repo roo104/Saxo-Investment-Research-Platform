@@ -145,7 +145,43 @@ data class NetPositionView(
     @param:JsonProperty("MarketValue") val marketValue: Double? = null,
     @param:JsonProperty("ProfitLossOnTrade") val profitLossOnTrade: Double? = null,
     @param:JsonProperty("ProfitLossOnTradeInBaseCurrency") val profitLossOnTradeInBaseCurrency: Double? = null,
+    @param:JsonProperty("TradeCostsTotal") val tradeCostsTotal: Double? = null,
+    @param:JsonProperty("TradeCostsTotalInBaseCurrency") val tradeCostsTotalInBaseCurrency: Double? = null,
     @param:JsonProperty("Exposure") val exposure: Double? = null,
     @param:JsonProperty("ExposureCurrency") val exposureCurrency: String? = null,
     @param:JsonProperty("InstrumentPriceDayPercentChange") val instrumentPriceDayPercentChange: Double? = null,
+)
+
+/**
+ * A closed-position entry from `GET /port/v1/closedpositions/me`. Each entry pairs one opening fill
+ * with the closing fill that realised it, so the cost and P/L figures are final (not marked-to-market).
+ * The realised numbers live in the nested [ClosedPositionData]; [displayAndFormat] carries the label.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class ClosedPositionEntry(
+    @param:JsonProperty("ClosedPositionUniqueId") val closedPositionUniqueId: String,
+    @param:JsonProperty("NetPositionId") val netPositionId: String? = null,
+    @param:JsonProperty("ClosedPosition") val closed: ClosedPositionData? = null,
+    @param:JsonProperty("DisplayAndFormat") val displayAndFormat: DisplayAndFormat? = null,
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class ClosedPositionData(
+    @param:JsonProperty("Uic") val uic: Long? = null,
+    @param:JsonProperty("AssetType") val assetType: String? = null,
+    @param:JsonProperty("Amount") val amount: Double? = null,
+    @param:JsonProperty("BuyOrSell") val buyOrSell: String? = null,
+    @param:JsonProperty("OpenPrice") val openPrice: Double? = null,
+    @param:JsonProperty("ClosingPrice") val closingPrice: Double? = null,
+    @param:JsonProperty("ExecutionTimeOpen") val executionTimeOpen: String? = null,
+    @param:JsonProperty("ExecutionTimeClose") val executionTimeClose: String? = null,
+    // Saxo reports costs as negative amounts (money paid). Instrument currency and base-currency variants.
+    @param:JsonProperty("CostOpening") val costOpening: Double? = null,
+    @param:JsonProperty("CostOpeningInBaseCurrency") val costOpeningInBaseCurrency: Double? = null,
+    @param:JsonProperty("CostClosing") val costClosing: Double? = null,
+    @param:JsonProperty("CostClosingInBaseCurrency") val costClosingInBaseCurrency: Double? = null,
+    @param:JsonProperty("ClosedProfitLoss") val closedProfitLoss: Double? = null,
+    @param:JsonProperty("ClosedProfitLossInBaseCurrency") val closedProfitLossInBaseCurrency: Double? = null,
+    // The isolated FX gain/loss between open and close; present on newer API versions, may be absent.
+    @param:JsonProperty("ProfitLossCurrencyConversion") val profitLossCurrencyConversion: Double? = null,
 )

@@ -2,6 +2,7 @@ package jp.saxo_investment_manager.service
 
 import jp.saxo_investment_manager.api.AccountDto
 import jp.saxo_investment_manager.api.AccountOverviewDto
+import jp.saxo_investment_manager.api.ClosedPositionDto
 import jp.saxo_investment_manager.api.PositionDto
 import jp.saxo_investment_manager.saxo.AccountClient
 import kotlinx.coroutines.async
@@ -38,4 +39,8 @@ class AccountService(private val accountClient: AccountClient) {
     /** Open net positions, valued and mapped for display. */
     suspend fun positions(): List<PositionDto> =
         accountClient.netPositions().map { it.toDto() }
+
+    /** Realised (closed) positions with their opening/closing costs and currency-conversion P/L. */
+    suspend fun closedPositions(): List<ClosedPositionDto> =
+        accountClient.closedPositions().map { it.toDto() }
 }

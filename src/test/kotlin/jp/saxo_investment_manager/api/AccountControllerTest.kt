@@ -64,6 +64,7 @@ class AccountControllerTest(
                 assetType = "Stock", currency = "USD", amount = 100.0, openingDirection = "Buy",
                 averageOpenPrice = 150.0, currentPrice = 175.0, marketValue = 17500.0,
                 profitLoss = 2500.0, profitLossBase = 2500.0, profitLossPct = 0.1667, dayChangePct = 0.012,
+                tradeCosts = -11.35, tradeCostsBase = -10.02,
             ),
         )
 
@@ -72,6 +73,27 @@ class AccountControllerTest(
             .expectBody()
             .jsonPath("$[0].symbol").isEqualTo("AAPL:xnas")
             .jsonPath("$[0].profitLoss").isEqualTo(2500.0)
+            .jsonPath("$[0].tradeCosts").isEqualTo(-11.35)
+    }
+
+    @Test
+    fun `returns closed positions`() {
+        coEvery { service.closedPositions() } returns listOf(
+            ClosedPositionDto(
+                closedPositionId = "1-2", uic = 21, symbol = "EURUSD", description = "Euro/US Dollar",
+                assetType = "FxSpot", currency = "USD", amount = 100000.0, buyOrSell = "Buy",
+                openPrice = 1.1, closingPrice = 1.12, openedAt = "2026-07-01T10:00:00Z",
+                closedAt = "2026-07-03T14:30:00Z", openingCost = -5.0, closingCost = -4.0,
+                profitLoss = 200.0, profitLossBase = 180.0, currencyConversionPl = -8.0,
+            ),
+        )
+
+        webClient.get().uri("/api/account/closed-positions").exchange()
+            .expectStatus().isOk
+            .expectBody()
+            .jsonPath("$[0].symbol").isEqualTo("EURUSD")
+            .jsonPath("$[0].openingCost").isEqualTo(-5.0)
+            .jsonPath("$[0].currencyConversionPl").isEqualTo(-8.0)
     }
 
     @Test

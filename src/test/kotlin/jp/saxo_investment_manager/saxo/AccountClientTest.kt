@@ -116,4 +116,65 @@ class AccountClientTest {
                     || request.path!!.contains("FieldGroups=NetPositionBase%2CNetPositionView%2CDisplayAndFormat")
         )
     }
+
+    @Test
+    fun `parses net position trade costs`() = runBlocking {
+        server.enqueue(
+            MockResponse().addHeader("Content-Type", "application/json").setBody(
+                """
+                {"Data":[
+                  {"NetPositionId":"211__Stock",
+                   "NetPositionBase":{"Uic":211,"AssetType":"Stock","Amount":100},
+                   "NetPositionView":{"ProfitLossOnTrade":2500.0,"TradeCostsTotal":-11.35,
+                     "TradeCostsTotalInBaseCurrency":-10.02}}
+                ]}
+                """.trimIndent(),
+            ),
+        )
+
+        val pos = client.netPositions().first()
+
+        assertEquals(-11.35, pos.view?.tradeCostsTotal)
+        assertEquals(-10.02, pos.view?.tradeCostsTotalInBaseCurrency)
+    }
+
+    @Test
+    fun `parses closed positions with field groups`() = runBlocking {
+        // The closedpositions/me endpoint returns a bare array, not the {"Data":[...]} envelope.
+        server.enqueue(
+            MockResponse().addHeader("Content-Type", "application/json").setBody(
+                """
+                [
+                  {"ClosedPosition":{
+                     "AccountId":"9226397","Amount":100000,"AssetType":"FxSpot","BuyOrSell":"Buy",
+                     "ClosedProfitLoss":29,"ClosedProfitLossInBaseCurrency":25.6447,
+                     "ClosingPrice":1.13025,"OpenPrice":1.13054,
+                     "CostOpening":-5.65,"CostOpeningInBaseCurrency":-5.0,
+                     "CostClosing":-5.65,"CostClosingInBaseCurrency":-5.0,
+                     "ProfitLossCurrencyConversion":-1.2,
+                     "ExecutionTimeOpen":"2019-03-05T22:39:43Z","ExecutionTimeClose":"2019-03-05T22:57:51Z","Uic":21},
+                   "ClosedPositionUniqueId":"212702696-212702772","NetPositionId":"EURUSD__FxSpot",
+                   "DisplayAndFormat":{"Currency":"USD","Description":"Euro/US Dollar","Symbol":"EURUSD"}}
+                ]
+                """.trimIndent(),
+            ),
+        )
+
+        val result = client.closedPositions()
+
+        assertEquals(1, result.size)
+        val cp = result.first()
+        assertEquals("212702696-212702772", cp.closedPositionUniqueId)
+        assertEquals("EURUSD", cp.displayAndFormat?.symbol)
+        assertEquals(-5.0, cp.closed?.costOpeningInBaseCurrency)
+        assertEquals(-1.2, cp.closed?.profitLossCurrencyConversion)
+        assertEquals(25.6447, cp.closed?.closedProfitLossInBaseCurrency)
+
+        val request = server.takeRequest()
+        assertTrue(request.path!!.startsWith("/port/v1/closedpositions/me"))
+        assertTrue(
+            request.path!!.contains("FieldGroups=ClosedPosition,DisplayAndFormat")
+                    || request.path!!.contains("FieldGroups=ClosedPosition%2CDisplayAndFormat")
+        )
+    }
 }

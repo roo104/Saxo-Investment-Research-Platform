@@ -31,6 +31,10 @@ class AccountController(
     @Operation(summary = "List open net positions, valued with current prices")
     suspend fun positions(): List<PositionDto> = accountService.positions()
 
+    @GetMapping("/closed-positions")
+    @Operation(summary = "List realised (closed) positions with opening/closing costs and FX-conversion P/L")
+    suspend fun closedPositions(): List<ClosedPositionDto> = accountService.closedPositions()
+
     /**
      * Streams live account P&L as Server-Sent Events: a `balance` event carrying the aggregate
      * balance and a `positions` event carrying the full valued net-position list. Emits the latest

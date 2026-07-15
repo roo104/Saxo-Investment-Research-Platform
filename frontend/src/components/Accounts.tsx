@@ -1,7 +1,8 @@
 import {useCallback, useEffect, useState} from 'react'
 import {api} from '../api'
 import {fmtDecimal} from '../format'
-import type {AccountBalance, AccountOverview, Position} from '../types'
+import {ClosedPositions} from './ClosedPositions'
+import type {AccountBalance, AccountOverview, ClosedPosition, Position} from '../types'
 
 // Balance and positions arrive live over SSE; a slow reconcile poll corrects any drift and keeps
 // the accounts list (which the stream doesn't carry) fresh, and covers gaps where simulation
@@ -37,15 +38,17 @@ function sign(value: number | null | undefined): string {
 export function Accounts() {
     const [overview, setOverview] = useState<AccountOverview | null>(null)
     const [positions, setPositions] = useState<Position[]>([])
+    const [closed, setClosed] = useState<ClosedPosition[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [streaming, setStreaming] = useState(false)
 
     const load = useCallback(async () => {
         try {
-            const [o, p] = await Promise.all([api.getAccount(), api.getPositions()])
+            const [o, p, c] = await Promise.all([api.getAccount(), api.getPositions(), api.getClosedPositions()])
             setOverview(o)
             setPositions(p)
+            setClosed(c)
             setError(null)
         } catch {
             setError('Could not load account data')
@@ -88,6 +91,7 @@ export function Accounts() {
         : null
 
     return (
+        <>
         <section className="panel accounts">
             <div className="panel-head">
                 <h2>Accounts</h2>
@@ -131,6 +135,7 @@ export function Accounts() {
                         <th className="num">Last</th>
                         <th className="num">Market value</th>
                         <th className="num">P/L</th>
+                        <th className="num">Costs</th>
                         <th className="num">Day</th>
                     </tr>
                     </thead>
@@ -138,8 +143,8 @@ export function Accounts() {
                     {positions.map((p) => (
                         <tr key={p.netPositionId}>
                             <td>
-                                <span className="acct-sym">{p.symbol}</span>
-                                <span className="acct-desc">{p.description}</span>
+                                <span className="acct-sym">{p.description}</span>
+                                <span className="acct-desc" title={p.symbol}>{p.symbol}</span>
                             </td>
                             <td className="num tnum">{p.amount != null ? fmtDecimal(p.amount, 0) : '—'}</td>
                             <td className="num tnum">{p.averageOpenPrice != null ? fmtDecimal(p.averageOpenPrice) : '—'}</td>
@@ -150,6 +155,7 @@ export function Accounts() {
                                 {p.profitLossPct != null &&
                                     <span className="acct-pl-pct"> ({pct(p.profitLossPct)})</span>}
                             </td>
+                            <td className="num tnum">{money(p.tradeCosts, p.currency)}</td>
                             <td className={`num tnum ${sign(p.dayChangePct)}`}>{pct(p.dayChangePct)}</td>
                         </tr>
                     ))}
@@ -164,5 +170,7 @@ export function Accounts() {
                 )
             )}
         </section>
+            <ClosedPositions positions={closed} currency={ccy}/>
+        </>
     )
 }

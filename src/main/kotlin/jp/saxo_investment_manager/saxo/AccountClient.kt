@@ -58,4 +58,22 @@ class AccountClient(private val saxoWebClient: WebClient) {
             .retrieve()
             .awaitBody<SaxoCollection<NetPosition>>()
             .data
+
+    /**
+     * Closed positions via `GET /port/v1/closedpositions/me`: realised trades pairing each opening
+     * fill with its close. The `ClosedPosition` field group carries the realised costs and P/L
+     * (opening/closing cost, currency-conversion P/L); `DisplayAndFormat` carries the instrument label.
+     *
+     * Unlike the other Portfolio `/me` endpoints this returns a bare JSON array, not the
+     * `{"Data":[...]}` envelope, so it deserializes straight into a list.
+     */
+    suspend fun closedPositions(): List<ClosedPositionEntry> =
+        saxoWebClient.get()
+            .uri { builder ->
+                builder.path("/port/v1/closedpositions/me")
+                    .queryParam("FieldGroups", "ClosedPosition,DisplayAndFormat")
+                    .build()
+            }
+            .retrieve()
+            .awaitBody<List<ClosedPositionEntry>>()
 }

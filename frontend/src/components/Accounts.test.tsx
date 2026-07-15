@@ -5,7 +5,7 @@ import {api} from '../api'
 import type {AccountBalance, AccountOverview, Position} from '../types'
 
 vi.mock('../api', () => ({
-    api: {getAccount: vi.fn(), getPositions: vi.fn()},
+    api: {getAccount: vi.fn(), getPositions: vi.fn(), getClosedPositions: vi.fn()},
 }))
 
 /** A controllable EventSource stand-in: jsdom has none, and the tests drive events by hand. */
@@ -49,6 +49,7 @@ const position: Position = {
     assetType: 'Stock', currency: 'USD', amount: 100, openingDirection: 'Buy',
     averageOpenPrice: 150, currentPrice: 175, marketValue: 17500,
     profitLoss: 2500, profitLossBase: 2500, profitLossPct: 0.1667, dayChangePct: 0.012,
+    tradeCosts: -11.35, tradeCostsBase: -10.02,
 }
 
 describe('Accounts', () => {
@@ -56,6 +57,8 @@ describe('Accounts', () => {
         vi.clearAllMocks()
         MockEventSource.instances = []
         vi.stubGlobal('EventSource', MockEventSource)
+        // Closed positions are historical and loaded alongside the snapshot; default to none.
+        vi.mocked(api.getClosedPositions).mockResolvedValue([])
     })
 
     it('renders the balance headline and a positions row with signed P/L', async () => {

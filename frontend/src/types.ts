@@ -140,6 +140,31 @@ export interface Position {
     // Raw ratios (e.g. 0.1667 = +16.67%); the client localises them.
     profitLossPct: number | null
     dayChangePct: number | null
+    // Trade costs incurred so far (Saxo reports these as negative = paid).
+    tradeCosts: number | null
+    tradeCostsBase: number | null
+}
+
+export interface ClosedPosition {
+    closedPositionId: string
+    uic: number | null
+    symbol: string
+    description: string
+    assetType: string | null
+    currency: string | null
+    amount: number | null
+    buyOrSell: string | null
+    openPrice: number | null
+    closingPrice: number | null
+    openedAt: string | null
+    closedAt: string | null
+    // Opening/closing costs in the account base currency (negative = paid).
+    openingCost: number | null
+    closingCost: number | null
+    profitLoss: number | null
+    profitLossBase: number | null
+    // Realised P/L attributable to FX conversion, base currency; null when Saxo doesn't report it.
+    currencyConversionPl: number | null
 }
 
 export interface PriceTick {

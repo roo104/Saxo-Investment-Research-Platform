@@ -197,6 +197,41 @@ body {
     }
 }
 
+/* ------------------------------- tabs ------------------------------- */
+
+/* Top-level view switch: Research (search + watchlist + allocation + markets)
+ * vs. Account (the read-only Saxo account panel). */
+.tabbar {
+    display: flex;
+    gap: 26px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+}
+
+.tabbar-tab {
+    font-family: var(--font-ui);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-faint);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 4px 2px 12px;
+    margin-bottom: -1px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.tabbar-tab:hover {
+    color: var(--text-dim);
+}
+
+.tabbar-tab.active {
+    color: var(--text);
+    border-bottom-color: var(--blue);
+}
+
 /* ----------------------------- layout ------------------------------- */
 
 .stack {

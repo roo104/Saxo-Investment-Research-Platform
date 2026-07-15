@@ -8,12 +8,15 @@ import {MarketsOverview} from './components/MarketsOverview'
 import {Portfolio} from './components/Portfolio'
 import type {EnvironmentInfo, Instrument, PriceTick, PortfolioEntry} from './types'
 
+type Tab = 'research' | 'account'
+
 export default function App() {
     const [env, setEnv] = useState<EnvironmentInfo | null>(null)
     const [entries, setEntries] = useState<PortfolioEntry[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [streaming, setStreaming] = useState(false)
+    const [tab, setTab] = useState<Tab>('research')
     const loaded = useRef(false)
 
     const refresh = useCallback(async () => {
@@ -107,14 +110,38 @@ export default function App() {
                 <EnvironmentBadge env={env}/>
             </header>
 
-            <main className="stack">
-                <SearchPanel onAdd={handleAdd} isOnPortfolio={isOnPortfolio}/>
-                <Accounts/>
-                <Portfolio entries={entries} loading={loading} error={error} streaming={streaming}
-                           onRemove={handleRemove}/>
-                {entries.length > 0 && <AllocationOverview entries={entries}/>}
-                <MarketsOverview/>
-            </main>
+            <nav className="tabbar" role="tablist" aria-label="Views">
+                <button
+                    role="tab"
+                    aria-selected={tab === 'research'}
+                    className={`tabbar-tab${tab === 'research' ? ' active' : ''}`}
+                    onClick={() => setTab('research')}
+                >
+                    Research
+                </button>
+                <button
+                    role="tab"
+                    aria-selected={tab === 'account'}
+                    className={`tabbar-tab${tab === 'account' ? ' active' : ''}`}
+                    onClick={() => setTab('account')}
+                >
+                    Account
+                </button>
+            </nav>
+
+            {tab === 'research' ? (
+                <main className="stack">
+                    <SearchPanel onAdd={handleAdd} isOnPortfolio={isOnPortfolio}/>
+                    <Portfolio entries={entries} loading={loading} error={error} streaming={streaming}
+                               onRemove={handleRemove}/>
+                    {entries.length > 0 && <AllocationOverview entries={entries}/>}
+                    <MarketsOverview/>
+                </main>
+            ) : (
+                <main className="stack">
+                    <Accounts/>
+                </main>
+            )}
 
             <p className="footer-note">
                 {streaming ? 'Live prices streaming' : 'Reconnecting stream…'} · API docs at{' '}

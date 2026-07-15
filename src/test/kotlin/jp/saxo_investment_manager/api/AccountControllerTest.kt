@@ -3,6 +3,7 @@ package jp.saxo_investment_manager.api
 import io.mockk.coEvery
 import io.mockk.mockk
 import jp.saxo_investment_manager.service.AccountService
+import jp.saxo_investment_manager.streaming.SaxoPortfolioStream
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.TestConfiguration
@@ -24,6 +25,10 @@ class AccountControllerTest(
     class Mocks {
         @Bean
         fun accountService(): AccountService = mockk()
+
+        // relaxed: Spring invokes DisposableBean.destroy() on shutdown, which the tests don't stub.
+        @Bean
+        fun portfolioStream(): SaxoPortfolioStream = mockk(relaxed = true)
     }
 
     @Test

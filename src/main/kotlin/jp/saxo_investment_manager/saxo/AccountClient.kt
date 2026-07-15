@@ -14,6 +14,16 @@ import org.springframework.web.reactive.function.client.awaitBody
 @Component
 class AccountClient(private val saxoWebClient: WebClient) {
 
+    /**
+     * The authenticated client via `GET /port/v1/clients/me`, carrying the `ClientKey` the
+     * streaming subscription endpoints need in their arguments.
+     */
+    suspend fun me(): ClientInfo =
+        saxoWebClient.get()
+            .uri("/port/v1/clients/me")
+            .retrieve()
+            .awaitBody<ClientInfo>()
+
     /** Accounts belonging to the authenticated user via `GET /port/v1/accounts/me`. */
     suspend fun accounts(): List<SaxoAccount> =
         saxoWebClient.get()

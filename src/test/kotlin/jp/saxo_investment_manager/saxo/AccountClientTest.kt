@@ -26,6 +26,21 @@ class AccountClientTest {
     fun tearDown() = server.shutdown()
 
     @Test
+    fun `parses the client info`() = runBlocking {
+        server.enqueue(
+            MockResponse().addHeader("Content-Type", "application/json").setBody(
+                """{"ClientKey":"ck==","DefaultAccountKey":"ak=="}""",
+            ),
+        )
+
+        val result = client.me()
+
+        assertEquals("ck==", result.clientKey)
+        assertEquals("ak==", result.defaultAccountKey)
+        assertEquals("/port/v1/clients/me", server.takeRequest().path)
+    }
+
+    @Test
     fun `parses accounts collection`() = runBlocking {
         server.enqueue(
             MockResponse().addHeader("Content-Type", "application/json").setBody(

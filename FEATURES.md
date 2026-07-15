@@ -64,14 +64,14 @@ it.
 
 ## 5. Portfolio & accounts
 
-| Feature                            | Status | Notes                                                                                      |
-|------------------------------------|--------|--------------------------------------------------------------------------------------------|
-| Account balance & cash             | ✅      | `port/v1/balances/me` → `GET /api/account` (total value, cash, unrealised P/L, open count) |
-| Open positions & net positions     | ✅      | `port/v1/netpositions/me` → `GET /api/account/positions` (per-position market value + P/L) |
-| Orders (open / filled / cancelled) | ⬜      | `port/v1/orders`, `port/v1/closedpositions`                                                |
-| Account & client switching         | 🟡     | accounts listed in the overview; no multi-account switcher yet (`port/v1/accounts`)        |
-| Performance & returns over time    | ⬜      | `hist/v3/performance`, `hist/v4/positions`                                                 |
-| Live P&L (streaming)               | ⬜      | position subscriptions; the Accounts panel polls (~30s) rather than streaming for now      |
+| Feature                            | Status | Notes                                                                                                                                                                                                                                                                                 |
+|------------------------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Account balance & cash             | ✅      | `port/v1/balances/me` → `GET /api/account` (total value, cash, unrealised P/L, open count)                                                                                                                                                                                            |
+| Open positions & net positions     | ✅      | `port/v1/netpositions/me` → `GET /api/account/positions` (per-position market value + P/L)                                                                                                                                                                                            |
+| Orders (open / filled / cancelled) | ⬜      | `port/v1/orders`, `port/v1/closedpositions`                                                                                                                                                                                                                                           |
+| Account & client switching         | 🟡     | accounts listed in the overview; no multi-account switcher yet (`port/v1/accounts`)                                                                                                                                                                                                   |
+| Performance & returns over time    | ⬜      | `hist/v3/performance`, `hist/v4/positions`                                                                                                                                                                                                                                            |
+| Live P&L (streaming)               | ✅      | balance + net-position subscriptions (`port/v1/.../subscriptions`) → SSE (`GET /api/account/stream`); balance & position P/L update live, with a 60s reconcile poll as fallback. In sim, deltas can be sparse for equities (see entitlement note) — the snapshot + poll cover the gap |
 
 ## 6. Trading & orders *(live only — requires real auth + confirmations)*
 
@@ -145,8 +145,8 @@ it.
 - **Phase 1 — Research (now):** search ✅, portfolio ✅, quotes ✅, charts ✅. Next: instrument
   detail, candlestick view, indicators, multiple portfolios.
 - **Phase 2 — Real-time & portfolio:** live price streaming ✅ (WebSocket → SSE), streaming charts ✅,
-  read-only account (balance + net positions) ✅. Next: performance/returns history, live P&L
-  streaming, and price alerts.
+  read-only account (balance + net positions) ✅, live P&L streaming ✅. Next: performance/returns
+  history and price alerts.
 - **Phase 3 — Trading (live):** OAuth/PKCE auth, pre-trade cost/margin, order placement with
   confirmations — simulation-first, then gated live.
 - **Phase 4 — Retail polish:** screening, news/fundamentals, risk analytics, multi-user, alerts

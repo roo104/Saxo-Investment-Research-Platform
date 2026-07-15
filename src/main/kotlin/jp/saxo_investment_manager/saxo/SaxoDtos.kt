@@ -80,6 +80,18 @@ data class DisplayAndFormat(
     @param:JsonProperty("Symbol") val symbol: String? = null,
 )
 
+/**
+ * The authenticated client from `GET /port/v1/clients/me`.
+ *
+ * The streaming subscription endpoints (unlike the `/me` REST convenience) require an explicit
+ * [clientKey] in their `Arguments`, so this is resolved once and threaded into each subscription.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class ClientInfo(
+    @param:JsonProperty("ClientKey") val clientKey: String,
+    @param:JsonProperty("DefaultAccountKey") val defaultAccountKey: String? = null,
+)
+
 /** A single account from `GET /port/v1/accounts/me`. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SaxoAccount(

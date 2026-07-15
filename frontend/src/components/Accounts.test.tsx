@@ -1,12 +1,39 @@
-import {render, screen, waitFor} from '@testing-library/react'
+import {act, render, screen, waitFor} from '@testing-library/react'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {Accounts} from './Accounts'
 import {api} from '../api'
-import type {AccountOverview, Position} from '../types'
+import type {AccountBalance, AccountOverview, Position} from '../types'
 
 vi.mock('../api', () => ({
     api: {getAccount: vi.fn(), getPositions: vi.fn()},
 }))
+
+/** A controllable EventSource stand-in: jsdom has none, and the tests drive events by hand. */
+class MockEventSource {
+    static instances: MockEventSource[] = []
+    onopen: (() => void) | null = null
+    onerror: (() => void) | null = null
+    listeners: Record<string, (ev: MessageEvent) => void> = {}
+
+    constructor(public url: string) {
+        MockEventSource.instances.push(this)
+    }
+
+    addEventListener(type: string, cb: (ev: MessageEvent) => void) {
+        this.listeners[type] = cb
+    }
+
+    close() {
+    }
+
+    open() {
+        act(() => this.onopen?.())
+    }
+
+    emit(type: string, data: unknown) {
+        act(() => this.listeners[type]?.({data: JSON.stringify(data)} as MessageEvent))
+    }
+}
 
 const overview: AccountOverview = {
     accounts: [{accountId: '9226248', currency: 'USD', accountType: 'Normal', active: true}],
@@ -25,7 +52,11 @@ const position: Position = {
 }
 
 describe('Accounts', () => {
-    beforeEach(() => vi.clearAllMocks())
+    beforeEach(() => {
+        vi.clearAllMocks()
+        MockEventSource.instances = []
+        vi.stubGlobal('EventSource', MockEventSource)
+    })
 
     it('renders the balance headline and a positions row with signed P/L', async () => {
         vi.mocked(api.getAccount).mockResolvedValue(overview)
@@ -57,5 +88,38 @@ describe('Accounts', () => {
         render(<Accounts/>)
 
         await waitFor(() => expect(screen.getByText(/Could not load account data/i)).toBeInTheDocument())
+    })
+
+    it('applies live balance and position updates from the stream', async () => {
+        vi.mocked(api.getAccount).mockResolvedValue(overview)
+        vi.mocked(api.getPositions).mockResolvedValue([])
+
+        const {container} = render(<Accounts/>)
+        await waitFor(() => expect(screen.getByText(/No open positions/i)).toBeInTheDocument())
+
+        const es = MockEventSource.instances[0]
+        expect(es.url).toBe('/api/account/stream')
+
+        // A live position arrives, then a balance delta bumps the total value.
+        es.emit('positions', [position])
+        const updatedBalance: AccountBalance = {...overview.balance, totalValue: 118000}
+        es.emit('balance', updatedBalance)
+
+        await waitFor(() => expect(screen.getByText('AAPL:xnas')).toBeInTheDocument())
+        expect(screen.getByText(/118,?000\.00 USD/)).toBeInTheDocument()
+        expect(container.querySelector('.acct-positions td.up')!.textContent).toContain('+16.67%')
+    })
+
+    it('shows the live indicator once the stream opens', async () => {
+        vi.mocked(api.getAccount).mockResolvedValue(overview)
+        vi.mocked(api.getPositions).mockResolvedValue([])
+
+        const {container} = render(<Accounts/>)
+        await waitFor(() => expect(screen.getByText(/No open positions/i)).toBeInTheDocument())
+        expect(container.querySelector('.live-dot')).toBeNull()
+
+        MockEventSource.instances[0].open()
+
+        await waitFor(() => expect(container.querySelector('.live-dot')).not.toBeNull())
     })
 })

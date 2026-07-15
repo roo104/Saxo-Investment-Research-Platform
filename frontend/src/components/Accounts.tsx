@@ -1,10 +1,12 @@
 import {useCallback, useEffect, useState} from 'react'
 import {api} from '../api'
 import {fmtDecimal} from '../format'
-import type {AccountOverview, Position} from '../types'
+import type {AccountBalance, AccountOverview, Position} from '../types'
 
-// Read-only account state has no live stream in simulation, so re-poll on a modest cadence.
-const REFRESH_MS = 30_000
+// Balance and positions arrive live over SSE; a slow reconcile poll corrects any drift and keeps
+// the accounts list (which the stream doesn't carry) fresh, and covers gaps where simulation
+// entitlements make the stream deltas sparse.
+const REFRESH_MS = 60_000
 
 /** A money amount in its account/instrument currency, e.g. "117,500.00 USD". */
 function money(value: number | null | undefined, currency: string | null | undefined): string {
@@ -37,6 +39,7 @@ export function Accounts() {
     const [positions, setPositions] = useState<Position[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [streaming, setStreaming] = useState(false)
 
     const load = useCallback(async () => {
         try {
@@ -51,11 +54,28 @@ export function Accounts() {
         }
     }, [])
 
+    // Initial render plus a slow reconcile poll as a fallback for the live stream.
     useEffect(() => {
         load()
         const id = setInterval(load, REFRESH_MS)
         return () => clearInterval(id)
     }, [load])
+
+    // Live balance + positions over SSE, merged into the polled state.
+    useEffect(() => {
+        const es = new EventSource('/api/account/stream')
+        es.onopen = () => setStreaming(true)
+        es.onerror = () => setStreaming(false)
+        es.addEventListener('balance', (ev) => {
+            const balance: AccountBalance = JSON.parse((ev as MessageEvent).data)
+            setOverview((prev) => ({accounts: prev?.accounts ?? [], balance}))
+        })
+        es.addEventListener('positions', (ev) => {
+            const next: Position[] = JSON.parse((ev as MessageEvent).data)
+            setPositions(next)
+        })
+        return () => es.close()
+    }, [])
 
     const balance = overview?.balance
     const account = overview?.accounts.find((a) => a.active) ?? overview?.accounts[0] ?? null
@@ -68,6 +88,7 @@ export function Accounts() {
                 <h2>Accounts</h2>
                 <span className="count">
                     {loading && !overview ? <span className="spinner"/> : null}
+                    {streaming ? <span className="live-dot" title="Live streaming"/> : null}
                     {account ? `#${account.accountId}${account.accountType ? ` · ${account.accountType}` : ''}` : ''}
                 </span>
             </div>

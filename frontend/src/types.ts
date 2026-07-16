@@ -167,6 +167,25 @@ export interface ClosedPosition {
     currencyConversionPl: number | null
 }
 
+export type PerformancePeriod = 'Month' | 'Quarter' | 'Year' | 'AllTime'
+
+export interface PerformancePoint {
+    date: string
+    value: number
+}
+
+export interface Performance {
+    period: PerformancePeriod
+    available: boolean
+    startValue: number | null
+    endValue: number | null
+    // End minus start, in the account base currency.
+    absoluteReturn: number | null
+    // Return over the period as a raw ratio (e.g. 0.175 = +17.5%); the client localises it.
+    returnPct: number | null
+    points: PerformancePoint[]
+}
+
 export interface PriceTick {
     uic: number
     assetType: string

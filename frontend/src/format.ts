@@ -21,6 +21,11 @@ export function fmtDate(iso: string): string {
     return new Date(iso).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})
 }
 
+/** A calendar date including the year like "28 Mar 2016" — for spans measured in months/years. */
+export function fmtDateYear(iso: string): string {
+    return new Date(iso).toLocaleDateString(undefined, {year: 'numeric', month: 'short', day: 'numeric'})
+}
+
 /** A 24h clock time like "14:30" in the viewer's locale (never am/pm). */
 export function fmtTime(iso: string): string {
     return new Date(iso).toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', hour12: false})

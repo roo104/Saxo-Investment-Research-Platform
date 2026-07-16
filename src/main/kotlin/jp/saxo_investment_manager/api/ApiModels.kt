@@ -284,3 +284,40 @@ data class ClosedPositionDto(
     )
     val currencyConversionPl: Double?,
 )
+
+@Schema(description = "Standard reporting period for account performance (maps to Saxo's StandardPeriod).")
+enum class PerformancePeriod { Month, Quarter, Year, AllTime }
+
+@Schema(description = "One point on the account-value curve: total account value in base currency on a date.")
+data class PerformancePoint(
+    @get:Schema(description = "ISO-8601 date", example = "2026-07-10")
+    val date: String,
+    @get:Schema(description = "Total account value in the account base currency", example = "117500.0")
+    val value: Double,
+)
+
+@Schema(
+    description = "Historic account performance over a period: the account-value curve plus returns " +
+            "derived from it. Amounts are in the account base currency; percentages are raw ratios " +
+            "the frontend localises. In simulation the series is often empty (see entitlement note)."
+)
+data class PerformanceDto(
+    @get:Schema(description = "The reporting period this covers", example = "Year")
+    val period: PerformancePeriod,
+    @get:Schema(description = "False when there is no meaningful data to chart (no curve, or flat at zero)")
+    val available: Boolean,
+    @get:Schema(description = "Account value at the start of the period", example = "100000.0")
+    val startValue: Double?,
+    @get:Schema(description = "Account value at the end of the period (latest known)", example = "117500.0")
+    val endValue: Double?,
+    @get:Schema(description = "End minus start, in base currency", example = "17500.0")
+    val absoluteReturn: Double?,
+    @get:Schema(
+        description = "Return over the period as a raw ratio. Saxo's accumulated time-weighted return " +
+                "when available, else the simple change across the value curve.",
+        example = "0.175",
+    )
+    val returnPct: Double?,
+    @get:Schema(description = "The account-value curve, oldest point first")
+    val points: List<PerformancePoint>,
+)

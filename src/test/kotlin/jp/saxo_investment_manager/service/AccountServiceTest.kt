@@ -2,9 +2,15 @@ package jp.saxo_investment_manager.service
 
 import io.mockk.coEvery
 import io.mockk.mockk
+import jp.saxo_investment_manager.api.PerformancePeriod
 import jp.saxo_investment_manager.saxo.AccountBalance
 import jp.saxo_investment_manager.saxo.AccountClient
+import jp.saxo_investment_manager.saxo.AccountPerformance
+import jp.saxo_investment_manager.saxo.BalancePerformance
+import jp.saxo_investment_manager.saxo.ClientInfo
 import jp.saxo_investment_manager.saxo.ClosedPositionData
+import jp.saxo_investment_manager.saxo.PerformanceSample
+import jp.saxo_investment_manager.saxo.TimeWeightedPerformance
 import jp.saxo_investment_manager.saxo.ClosedPositionEntry
 import jp.saxo_investment_manager.saxo.DisplayAndFormat
 import jp.saxo_investment_manager.saxo.NetPosition
@@ -14,7 +20,9 @@ import jp.saxo_investment_manager.saxo.SaxoAccount
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class AccountServiceTest {
     private val client = mockk<AccountClient>()
@@ -117,5 +125,88 @@ class AccountServiceTest {
         assertEquals(-4.0, cp.closingCost)
         assertEquals(25.64, cp.profitLossBase)
         assertEquals(-1.2, cp.currencyConversionPl)
+    }
+
+    @Test
+    fun `performance resolves the client key and derives returns from the value curve`() = runBlocking {
+        coEvery { client.me() } returns ClientInfo(clientKey = "ck==")
+        coEvery { client.performance("ck==", "Year") } returns AccountPerformance(
+            balance = BalancePerformance(
+                accountValue = listOf(
+                    PerformanceSample("2026-01-01", 100000.0),
+                    PerformanceSample("2026-07-15", 117500.0),
+                ),
+            ),
+            timeWeighted = TimeWeightedPerformance(
+                accumulated = listOf(
+                    PerformanceSample("2026-01-01", 0.0),
+                    PerformanceSample("2026-07-15", 0.175),
+                ),
+            ),
+        )
+
+        val perf = service.performance(PerformancePeriod.Year)
+
+        assertTrue(perf.available)
+        assertEquals(PerformancePeriod.Year, perf.period)
+        assertEquals(100000.0, perf.startValue)
+        assertEquals(117500.0, perf.endValue)
+        assertEquals(17500.0, perf.absoluteReturn)
+        // Prefers Saxo's accumulated time-weighted return over the simple curve change.
+        assertEquals(0.175, perf.returnPct)
+        assertEquals(2, perf.points.size)
+        assertEquals("2026-01-01", perf.points.first().date)
+    }
+
+    @Test
+    fun `performance falls back to the simple curve change when no time-weighted series`() = runBlocking {
+        coEvery { client.me() } returns ClientInfo(clientKey = "ck==")
+        coEvery { client.performance("ck==", "Quarter") } returns AccountPerformance(
+            balance = BalancePerformance(
+                accountValue = listOf(
+                    PerformanceSample("2026-04-01", 200.0),
+                    PerformanceSample("2026-06-30", 250.0),
+                ),
+            ),
+        )
+
+        val perf = service.performance(PerformancePeriod.Quarter)
+
+        // 250 / 200 - 1 = 0.25
+        assertEquals(0.25, perf.returnPct!!, 1e-9)
+        assertEquals(50.0, perf.absoluteReturn)
+    }
+
+    @Test
+    fun `performance is unavailable when the value curve is flat at zero`() = runBlocking {
+        // A dead/unfunded account: Saxo returns points, but every account value is zero.
+        coEvery { client.me() } returns ClientInfo(clientKey = "ck==")
+        coEvery { client.performance("ck==", "Year") } returns AccountPerformance(
+            balance = BalancePerformance(
+                accountValue = listOf(
+                    PerformanceSample("2016-03-28", 0.0),
+                    PerformanceSample("2016-03-29", 0.0),
+                ),
+            ),
+        )
+
+        val perf = service.performance(PerformancePeriod.Year)
+
+        assertFalse(perf.available)
+        // The curve is still carried; the frontend simply doesn't chart a flat-zero line.
+        assertEquals(2, perf.points.size)
+    }
+
+    @Test
+    fun `performance is marked unavailable when Saxo returns no series`() = runBlocking {
+        coEvery { client.me() } returns ClientInfo(clientKey = "ck==")
+        coEvery { client.performance("ck==", "AllTime") } returns AccountPerformance()
+
+        val perf = service.performance(PerformancePeriod.AllTime)
+
+        assertFalse(perf.available)
+        assertNull(perf.startValue)
+        assertNull(perf.returnPct)
+        assertTrue(perf.points.isEmpty())
     }
 }

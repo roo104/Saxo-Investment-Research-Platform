@@ -13,6 +13,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.codec.ServerSentEvent
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -34,6 +35,12 @@ class AccountController(
     @GetMapping("/closed-positions")
     @Operation(summary = "List realised (closed) positions with opening/closing costs and FX-conversion P/L")
     suspend fun closedPositions(): List<ClosedPositionDto> = accountService.closedPositions()
+
+    @GetMapping("/performance")
+    @Operation(summary = "Historic account performance over a period (account-value curve + returns)")
+    suspend fun performance(
+        @RequestParam(defaultValue = "Year") period: PerformancePeriod,
+    ): PerformanceDto = accountService.performance(period)
 
     /**
      * Streams live account P&L as Server-Sent Events: a `balance` event carrying the aggregate

@@ -2,8 +2,12 @@ package jp.saxo_investment_manager.service
 
 import jp.saxo_investment_manager.api.AccountBalanceDto
 import jp.saxo_investment_manager.api.ClosedPositionDto
+import jp.saxo_investment_manager.api.PerformanceDto
+import jp.saxo_investment_manager.api.PerformancePoint
+import jp.saxo_investment_manager.api.PerformancePeriod
 import jp.saxo_investment_manager.api.PositionDto
 import jp.saxo_investment_manager.saxo.AccountBalance
+import jp.saxo_investment_manager.saxo.AccountPerformance
 import jp.saxo_investment_manager.saxo.ClosedPositionEntry
 import jp.saxo_investment_manager.saxo.NetPosition
 import kotlin.math.abs
@@ -77,5 +81,37 @@ internal fun ClosedPositionEntry.toDto(): ClosedPositionDto {
         profitLoss = c?.closedProfitLoss,
         profitLossBase = c?.closedProfitLossInBaseCurrency,
         currencyConversionPl = c?.profitLossCurrencyConversion,
+    )
+}
+
+/**
+ * Maps Saxo's performance response onto the frontend contract for the requested [period].
+ *
+ * The returns are derived here rather than trusting a Saxo summary field, so they are always
+ * consistent with the account-value curve the UI draws: [PerformanceDto.absoluteReturn] is the
+ * end-minus-start change in base currency, and [PerformanceDto.returnPct] prefers Saxo's accumulated
+ * time-weighted return (already a ratio) and falls back to the simple curve change when it's absent.
+ */
+internal fun AccountPerformance.toDto(period: PerformancePeriod): PerformanceDto {
+    val points = balance?.accountValue.orEmpty()
+        .mapNotNull { sample -> sample.value?.let { PerformancePoint(date = sample.date, value = it) } }
+    val startValue = points.firstOrNull()?.value
+    val endValue = points.lastOrNull()?.value
+    val absoluteReturn = if (startValue != null && endValue != null) endValue - startValue else null
+
+    val timeWeighted = timeWeighted?.accumulated.orEmpty().lastOrNull { it.value != null }?.value
+    val returnPct = timeWeighted
+        ?: if (startValue != null && startValue != 0.0 && endValue != null) endValue / startValue - 1 else null
+
+    return PerformanceDto(
+        period = period,
+        // A curve that is empty or flat at zero (e.g. a dead/unfunded account) has no meaningful
+        // performance to chart; a funded account sitting flat at a non-zero value still does.
+        available = points.any { it.value != 0.0 },
+        startValue = startValue,
+        endValue = endValue,
+        absoluteReturn = absoluteReturn,
+        returnPct = returnPct,
+        points = points,
     )
 }

@@ -97,6 +97,32 @@ class AccountControllerTest(
     }
 
     @Test
+    fun `returns account performance defaulting to the year period`() {
+        coEvery { service.performance(PerformancePeriod.Year) } returns PerformanceDto(
+            period = PerformancePeriod.Year, available = true,
+            startValue = 100000.0, endValue = 117500.0, absoluteReturn = 17500.0, returnPct = 0.175,
+            points = listOf(
+                PerformancePoint(date = "2026-01-01", value = 100000.0),
+                PerformancePoint(date = "2026-07-15", value = 117500.0),
+            ),
+        )
+
+        webClient.get().uri("/api/account/performance").exchange()
+            .expectStatus().isOk
+            .expectBody()
+            .jsonPath("$.period").isEqualTo("Year")
+            .jsonPath("$.available").isEqualTo(true)
+            .jsonPath("$.returnPct").isEqualTo(0.175)
+            .jsonPath("$.points[1].value").isEqualTo(117500.0)
+    }
+
+    @Test
+    fun `rejects an unknown performance period with 400`() {
+        webClient.get().uri("/api/account/performance?period=Decade").exchange()
+            .expectStatus().isBadRequest
+    }
+
+    @Test
     fun `surfaces Saxo errors as problem detail preserving the upstream status`() {
         coEvery { service.overview() } throws WebClientResponseException.create(
             HttpStatus.UNAUTHORIZED.value(),

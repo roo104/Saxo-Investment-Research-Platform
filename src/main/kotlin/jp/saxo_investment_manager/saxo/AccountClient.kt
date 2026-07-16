@@ -76,4 +76,23 @@ class AccountClient(private val saxoWebClient: WebClient) {
             }
             .retrieve()
             .awaitBody<List<ClosedPositionEntry>>()
+
+    /**
+     * Historic account performance via `GET /hist/v3/perf/{clientKey}` for a [standardPeriod]
+     * (e.g. `Month`, `Quarter`, `Year`, `AllTime`).
+     *
+     * Unlike the `/port/v1/.../me` endpoints, the History service group takes the `ClientKey`
+     * (resolved once via [me]) as a path segment. Only the account-value and time-weighted-return
+     * field groups are requested to keep the response small.
+     */
+    suspend fun performance(clientKey: String, standardPeriod: String): AccountPerformance =
+        saxoWebClient.get()
+            .uri { builder ->
+                builder.path("/hist/v3/perf/{clientKey}")
+                    .queryParam("StandardPeriod", standardPeriod)
+                    .queryParam("FieldGroups", "BalancePerformance,TimeWeightedPerformance")
+                    .build(clientKey)
+            }
+            .retrieve()
+            .awaitBody<AccountPerformance>()
 }

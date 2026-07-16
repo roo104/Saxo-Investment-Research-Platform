@@ -2,11 +2,18 @@ import {act, render, screen, waitFor} from '@testing-library/react'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {Accounts} from './Accounts'
 import {api} from '../api'
-import type {AccountBalance, AccountOverview, Position} from '../types'
+import type {AccountBalance, AccountOverview, Performance as PerformanceData, Position} from '../types'
 
 vi.mock('../api', () => ({
-    api: {getAccount: vi.fn(), getPositions: vi.fn(), getClosedPositions: vi.fn()},
+    api: {getAccount: vi.fn(), getPositions: vi.fn(), getClosedPositions: vi.fn(), getPerformance: vi.fn()},
 }))
+
+// The Performance panel loads independently; default to "no data" so its KPIs don't collide with
+// the balance assertions below (they'd otherwise render the same currency amounts).
+const noPerformance: PerformanceData = {
+    period: 'Year', available: false, startValue: null, endValue: null,
+    absoluteReturn: null, returnPct: null, points: [],
+}
 
 /** A controllable EventSource stand-in: jsdom has none, and the tests drive events by hand. */
 class MockEventSource {
@@ -59,6 +66,7 @@ describe('Accounts', () => {
         vi.stubGlobal('EventSource', MockEventSource)
         // Closed positions are historical and loaded alongside the snapshot; default to none.
         vi.mocked(api.getClosedPositions).mockResolvedValue([])
+        vi.mocked(api.getPerformance).mockResolvedValue(noPerformance)
     })
 
     it('renders the balance headline and a positions row with signed P/L', async () => {

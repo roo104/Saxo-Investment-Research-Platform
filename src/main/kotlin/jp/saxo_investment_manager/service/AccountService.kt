@@ -3,6 +3,8 @@ package jp.saxo_investment_manager.service
 import jp.saxo_investment_manager.api.AccountDto
 import jp.saxo_investment_manager.api.AccountOverviewDto
 import jp.saxo_investment_manager.api.ClosedPositionDto
+import jp.saxo_investment_manager.api.PerformanceDto
+import jp.saxo_investment_manager.api.PerformancePeriod
 import jp.saxo_investment_manager.api.PositionDto
 import jp.saxo_investment_manager.saxo.AccountClient
 import kotlinx.coroutines.async
@@ -43,4 +45,15 @@ class AccountService(private val accountClient: AccountClient) {
     /** Realised (closed) positions with their opening/closing costs and currency-conversion P/L. */
     suspend fun closedPositions(): List<ClosedPositionDto> =
         accountClient.closedPositions().map { it.toDto() }
+
+    /**
+     * Historic account performance over [period]: the account-value curve plus derived returns.
+     *
+     * The History service group keys off the `ClientKey` (unlike the `/me` Portfolio endpoints), so
+     * it is resolved first and threaded into the performance call.
+     */
+    suspend fun performance(period: PerformancePeriod): PerformanceDto {
+        val clientKey = accountClient.me().clientKey
+        return accountClient.performance(clientKey, period.name).toDto(period)
+    }
 }

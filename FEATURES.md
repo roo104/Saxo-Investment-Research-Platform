@@ -70,7 +70,7 @@ it.
 | Open positions & net positions     | ✅      | `port/v1/netpositions/me` → `GET /api/account/positions` (per-position market value + P/L)                                                                                                                                                                                            |
 | Orders (open / filled / cancelled) | ⬜      | `port/v1/orders`, `port/v1/closedpositions`                                                                                                                                                                                                                                           |
 | Account & client switching         | 🟡     | accounts listed in the overview; no multi-account switcher yet (`port/v1/accounts`)                                                                                                                                                                                                   |
-| Performance & returns over time    | ⬜      | `hist/v3/performance`, `hist/v4/positions`                                                                                                                                                                                                                                            |
+| Performance & returns over time    | ✅      | Account value curve + period return (`GET /api/account/performance?period=`) → `hist/v3/perf/{ClientKey}`. Returns derived from the value curve (time-weighted when Saxo reports it); selectable 1M/3M/1Y/All. Often empty in simulation — the panel says so honestly                 |
 | Live P&L (streaming)               | ✅      | balance + net-position subscriptions (`port/v1/.../subscriptions`) → SSE (`GET /api/account/stream`); balance & position P/L update live, with a 60s reconcile poll as fallback. In sim, deltas can be sparse for equities (see entitlement note) — the snapshot + poll cover the gap |
 
 ## 6. Trading & orders *(live only — requires real auth + confirmations)*
@@ -145,8 +145,8 @@ it.
 - **Phase 1 — Research (now):** search ✅, portfolio ✅, quotes ✅, charts ✅. Next: instrument
   detail, candlestick view, indicators, multiple portfolios.
 - **Phase 2 — Real-time & portfolio:** live price streaming ✅ (WebSocket → SSE), streaming charts ✅,
-  read-only account (balance + net positions) ✅, live P&L streaming ✅. Next: performance/returns
-  history and price alerts.
+  read-only account (balance + net positions) ✅, live P&L streaming ✅, performance/returns
+  history ✅. Next: price alerts.
 - **Phase 3 — Trading (live):** OAuth/PKCE auth, pre-trade cost/margin, order placement with
   confirmations — simulation-first, then gated live.
 - **Phase 4 — Retail polish:** screening, news/fundamentals, risk analytics, multi-user, alerts
@@ -183,14 +183,14 @@ server (WebSocket). The "Used here" column links back to the sections above.
 
 ### History, reporting & client lifecycle
 
-| Service group          | Key resources / capabilities                                                                                                       | Used here     |
-|------------------------|-------------------------------------------------------------------------------------------------------------------------------------|---------------|
-| **Account History** (`hist`) | Performance, Transactions / audit trail, Unsettled amounts                                                                     | ⬜ §5 planned  |
-| **Client Reporting**   | PDF/XLS reports: account statement, portfolio report, trade details, trades executed                                                | ⬜             |
-| **Client Services**    | Audit OrderActivities, partner support cases, reports (aggregated amounts, MiFID 2 cost reporting), subscription mgmt, fund transfers | ⬜             |
-| **Client Management**  | Sign up and manage leads and clients (onboarding)                                                                                   | ⬜             |
-| **Asset Transfers** *(beta)* | Cash transfers, cash withdrawal, prebooked funds, securities transfers, interaccount securities transfer                      | ⬜             |
-| **Corporate Actions** *(licensed)* | Voluntary/mandatory events, elections, standing instructions, proxy voting                                             | ⬜             |
+| Service group                      | Key resources / capabilities                                                                                                          | Used here         |
+|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|-------------------|
+| **Account History** (`hist`)       | Performance, Transactions / audit trail, Unsettled amounts                                                                            | 🟡 §5 performance |
+| **Client Reporting**               | PDF/XLS reports: account statement, portfolio report, trade details, trades executed                                                  | ⬜                 |
+| **Client Services**                | Audit OrderActivities, partner support cases, reports (aggregated amounts, MiFID 2 cost reporting), subscription mgmt, fund transfers | ⬜                 |
+| **Client Management**              | Sign up and manage leads and clients (onboarding)                                                                                     | ⬜                 |
+| **Asset Transfers** *(beta)*       | Cash transfers, cash withdrawal, prebooked funds, securities transfers, interaccount securities transfer                              | ⬜                 |
+| **Corporate Actions** *(licensed)* | Voluntary/mandatory events, elections, standing instructions, proxy voting                                                            | ⬜                 |
 
 ### Notifications, regulatory & value-add
 

@@ -5,6 +5,8 @@ import type {
     Fundamentals,
     IndexSeries,
     Instrument,
+    Performance,
+    PerformancePeriod,
     Position,
     PriceHistory,
     Signals,
@@ -64,6 +66,9 @@ export const api = {
     getPositions: () => request<Position[]>('/account/positions'),
 
     getClosedPositions: () => request<ClosedPosition[]>('/account/closed-positions'),
+
+    getPerformance: (period: PerformancePeriod) =>
+        request<Performance>(`/account/performance?period=${period}`),
 
     addToPortfolio: (uic: number, assetType: string, quantity: number, openingPrice: number) =>
         request<PortfolioEntry>('/portfolio', {

@@ -165,6 +165,38 @@ data class ClosedPositionEntry(
     @param:JsonProperty("DisplayAndFormat") val displayAndFormat: DisplayAndFormat? = null,
 )
 
+/**
+ * Historic account performance from `GET /hist/v3/perf/{ClientKey}`.
+ *
+ * The response is split into field-group objects; this platform requests only
+ * `BalancePerformance` and `TimeWeightedPerformance`. [balance] carries the account-value curve
+ * (total account value in base currency per day) and [timeWeighted] carries the accumulated
+ * time-weighted return as a running ratio (e.g. `-0.0407` = −4.07%). Both are keyed off `/me`'s
+ * `ClientKey`, threaded in by the caller.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class AccountPerformance(
+    @param:JsonProperty("BalancePerformance") val balance: BalancePerformance? = null,
+    @param:JsonProperty("TimeWeightedPerformance") val timeWeighted: TimeWeightedPerformance? = null,
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class BalancePerformance(
+    @param:JsonProperty("AccountValueTimeSeries") val accountValue: List<PerformanceSample> = emptyList(),
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class TimeWeightedPerformance(
+    @param:JsonProperty("AccumulatedTimeWeightedTimeSeries") val accumulated: List<PerformanceSample> = emptyList(),
+)
+
+/** One `{Date, Value}` point in a performance time series. */
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class PerformanceSample(
+    @param:JsonProperty("Date") val date: String,
+    @param:JsonProperty("Value") val value: Double? = null,
+)
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ClosedPositionData(
     @param:JsonProperty("Uic") val uic: Long? = null,

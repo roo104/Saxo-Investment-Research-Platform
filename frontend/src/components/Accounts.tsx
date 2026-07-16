@@ -2,6 +2,7 @@ import {useCallback, useEffect, useState} from 'react'
 import {api} from '../api'
 import {fmtDecimal} from '../format'
 import {ClosedPositions} from './ClosedPositions'
+import {Performance} from './Performance'
 import type {AccountBalance, AccountOverview, ClosedPosition, Position} from '../types'
 
 // Balance and positions arrive live over SSE; a slow reconcile poll corrects any drift and keeps
@@ -170,6 +171,7 @@ export function Accounts() {
                 )
             )}
         </section>
+            <Performance currency={ccy}/>
             <ClosedPositions positions={closed} currency={ccy}/>
         </>
     )

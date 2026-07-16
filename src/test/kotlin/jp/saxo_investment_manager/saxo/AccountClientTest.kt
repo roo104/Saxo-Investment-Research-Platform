@@ -177,4 +177,37 @@ class AccountClientTest {
                     || request.path!!.contains("FieldGroups=ClosedPosition%2CDisplayAndFormat")
         )
     }
+
+    @Test
+    fun `parses account performance and encodes the client key in the path`() = runBlocking {
+        server.enqueue(
+            MockResponse().addHeader("Content-Type", "application/json").setBody(
+                """
+                {"BalancePerformance":{"AccountValueTimeSeries":[
+                   {"Date":"2026-01-01","Value":100000.0},
+                   {"Date":"2026-07-15","Value":117500.0}
+                 ]},
+                 "TimeWeightedPerformance":{"AccumulatedTimeWeightedTimeSeries":[
+                   {"Date":"2026-01-01","Value":0.0},
+                   {"Date":"2026-07-15","Value":0.175}
+                 ]}}
+                """.trimIndent(),
+            ),
+        )
+
+        val result = client.performance("Cl-ent=Key==", "Year")
+
+        assertEquals(2, result.balance?.accountValue?.size)
+        assertEquals(100000.0, result.balance?.accountValue?.first()?.value)
+        assertEquals(0.175, result.timeWeighted?.accumulated?.last()?.value)
+
+        val request = server.takeRequest()
+        // The ClientKey is a path segment, so its reserved characters must be percent-encoded.
+        assertTrue(request.path!!.startsWith("/hist/v3/perf/Cl-ent%3DKey%3D%3D"))
+        assertTrue(request.path!!.contains("StandardPeriod=Year"))
+        assertTrue(
+            request.path!!.contains("FieldGroups=BalancePerformance,TimeWeightedPerformance")
+                    || request.path!!.contains("FieldGroups=BalancePerformance%2CTimeWeightedPerformance")
+        )
+    }
 }
